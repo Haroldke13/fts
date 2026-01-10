@@ -6,6 +6,7 @@ from flask_jwt_extended import JWTManager
 import os
 
 from .db import db
+from .forms import UploadFileForm, CheckoutFileForm, ReturnFileForm
 login_manager = LoginManager()
 jwt = JWTManager()
 socketio = SocketIO(cors_allowed_origins="*")
@@ -77,6 +78,9 @@ def create_app():
     @app.route('/')
     def index():
         files = []  # Placeholder
-        return render_template('files/dashboard.html', files=files)
+        form = UploadFileForm()
+        checkout_form = CheckoutFileForm()
+        return_form = ReturnFileForm()
+        return render_template('files/dashboard.html', files=files, form=form, checkout_form=checkout_form, return_form=return_form)
 
     return app
