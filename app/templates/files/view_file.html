@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}View File{% endblock %}
+{% block content %}
+<h1>{{ file.title }}</h1>
+<p><strong>File Number:</strong> {{ file.file_number }}</p>
+<p><strong>Department:</strong> {{ file.department }}</p>
+<p><strong>Status:</strong> {% if file.is_issued %}Checked Out{% else %}Available{% endif %}</p>
+
+{% if file.filename %}
+<a href="{{ url_for('files.download', filename=file.filename) }}" class="btn btn-primary">Download File</a>
+{% endif %}
+
+<h3>Transaction History</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Action</th>
+            <th>Time</th>
+            <th>Purpose/Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tx in file.transactions %}
+        <tr>
+            <td>{{ tx.user.name }}</td>
+            <td>{% if tx.return_time %}Returned{% else %}Checked Out{% endif %}</td>
+            <td>{{ tx.checkout_time.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ tx.purpose or tx.comments or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

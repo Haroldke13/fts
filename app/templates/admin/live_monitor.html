@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Live Monitor{% endblock %}
+{% block content %}
+<h1>Live Monitor</h1>
+<div id="logs"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const socket = io();
+socket.on('log', (data) => {
+    const log = document.createElement('p');
+    log.textContent = data;
+    document.getElementById('logs').appendChild(log);
+});
+</script>
+{% endblock %}

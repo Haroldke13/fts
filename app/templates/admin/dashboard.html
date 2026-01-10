@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Users</h5>
+                <p class="card-text">{{ user_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Files</h5>
+                <p class="card-text">{{ file_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mt-4">
+    <h3>Current File Checkouts</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>File Number</th>
+                <th>Title</th>
+                <th>User</th>
+                <th>Checkout Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for checkout in current_checkouts %}
+            <tr>
+                <td>{{ checkout.file.file_number }}</td>
+                <td>{{ checkout.file.title }}</td>
+                <td>{{ checkout.user.name }}</td>
+                <td>{{ checkout.checkout_time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-4">
+    <h3>All Files</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>File Number</th>
+                <th>Title</th>
+                <th>Department</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in files %}
+            <tr>
+                <td>{{ file.file_number }}</td>
+                <td>{{ file.title }}</td>
+                <td>{{ file.department }}</td>
+                <td>{% if file.is_issued %}Issued{% else %}Available{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-4">
+    <a href="{{ url_for('admin.analytics') }}" class="btn btn-primary me-2">View Analytics</a>
+    <a href="{{ url_for('admin.live_monitor') }}" class="btn btn-secondary">Live Monitor</a>
+</div>
+{% endblock %}
+
+
+
+
+

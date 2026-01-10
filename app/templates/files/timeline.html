@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}File Timeline{% endblock %}
+{% block content %}
+<h1>File Timeline</h1>
+<ul>
+    {% for event in events %}
+    <li>{{ event.timestamp }}: {{ event.action }} on {{ event.filename }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}
