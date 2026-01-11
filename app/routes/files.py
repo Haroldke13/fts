@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app.models import FileRecord, FileTransaction
 from app.forms import CheckoutFileForm, ReturnFileForm, UploadFileForm
-from app import db
+from app import db, cache
 from datetime import datetime
 import os
 import shutil
@@ -49,6 +49,9 @@ def return_file():
             db.session.commit()
             flash("File returned", "success")
             
+            # Clear any cached dashboard data
+            cache.delete_memoized(dashboard)
+            
             from app.chat_socket import emit_file_update
             emit_file_update(tx, "return")
             from app.utils.audit import log_action
@@ -88,6 +91,9 @@ def checkout():
             db.session.add(tx)
             db.session.commit()
             flash("File checked out", "success")
+            
+            # Clear any cached dashboard data
+            cache.delete_memoized(dashboard)
             
             from app.chat_socket import emit_file_update
             emit_file_update(tx, "checkout")
@@ -164,6 +170,9 @@ def upload():
                 os.makedirs(version_dir, exist_ok=True)
                 version_path = os.path.join(version_dir, f"{datetime.now().isoformat()}_{filename}")
                 shutil.copy(file_path, version_path)
+
+                # Clear any cached dashboard data
+                cache.delete_memoized(dashboard)
 
                 flash('File uploaded and recorded', 'success')
             except Exception as e:

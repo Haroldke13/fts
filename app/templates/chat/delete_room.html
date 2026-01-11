@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Chat Room{% endblock %}
+
+{% block content %}
+<style>
+/* PBORA (Public Benefit Organizations Regulatory Authority) Kenya Color Scheme - 2026 Modern Edition */
+:root {
+    --pbora-primary: #006D77;        /* Deep teal - authority and trust */
+    --pbora-secondary: #009639;      /* Kenyan green - national pride */
+    --pbora-accent: #FFB612;         /* Gold accent - excellence */
+    --pbora-dark: #1A365D;           /* Dark blue - professionalism */
+    --pbora-light: #F8FAFC;          /* Light background */
+    --pbora-white: #FFFFFF;          /* Pure white */
+    --pbora-gray: #64748B;           /* Professional gray */
+    --pbora-success: #059669;        /* Success green */
+    --pbora-info: #0891B2;           /* Info teal */
+    --pbora-danger: #DC2626;         /* Danger red */
+
+    /* 2026 Modern Additions */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.12);
+    --gradient-primary: linear-gradient(135deg, var(--pbora-primary) 0%, var(--pbora-info) 100%);
+    --gradient-secondary: linear-gradient(135deg, var(--pbora-secondary) 0%, var(--pbora-accent) 100%);
+    --animation-speed: 0.3s;
+    --border-radius: 16px;
+    --border-radius-large: 24px;
+}
+
+/* Modern Body Styling - Matching Dashboard Background */
+body {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    color: #1f2937;
+}
+
+/* Modern Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+/* Delete Confirmation Card */
+.delete-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    padding: 3rem;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.delete-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    font-size: 2rem;
+    color: white;
+}
+
+.room-info {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.room-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.room-details {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.warning-text {
+    color: #DC2626;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+/* Form Styling */
+.delete-form {
+    margin-top: 2rem;
+}
+
+.confirm-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(220, 38, 38, 0.1);
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all var(--animation-speed) ease;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+}
+
+.btn-cancel {
+    background: var(--glass-bg);
+    color: #6b7280;
+    border: 1px solid var(--glass-border);
+    padding: 0.75rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all var(--animation-speed) ease;
+    margin-left: 1rem;
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-1px);
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .delete-card {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .btn-delete,
+    .btn-cancel {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+
+    .btn-cancel {
+        margin-left: 0;
+    }
+}
+</style>
+
+<div class="container-fluid mt-5">
+    <!-- Modern Page Header -->
+    <div class="page-header fade-in-up">
+        <h1 class="page-title">Delete Chat Room</h1>
+        <p class="page-subtitle">Permanently remove this chat room and all its messages</p>
+    </div>
+
+    <!-- Delete Confirmation Card -->
+    <div class="delete-card fade-in-up">
+        <div class="delete-icon">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+
+        <div class="room-info">
+            <div class="room-name">{{ room.name }}</div>
+            <div class="room-details">
+                <i class="fas fa-users me-1"></i>{{ room.members|length }} members •
+                <i class="fas fa-comments me-1"></i>{{ room.messages|length }} messages
+                {% if room.file %}
+                <br><i class="fas fa-file me-1"></i>File: {{ room.file.filename }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="warning-text">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            This action cannot be undone. All messages and member data will be permanently deleted.
+        </div>
+
+        <form method="POST" class="delete-form">
+            {{ form.hidden_tag() }}
+            <div class="confirm-checkbox">
+                {{ form.confirm_delete(class="form-check-input") }}
+                {{ form.confirm_delete.label(class="form-check-label fw-bold") }}
+            </div>
+            <div class="d-flex justify-content-center gap-3">
+                <button type="submit" class="btn-delete">
+                    <i class="fas fa-trash me-2"></i>Delete Room
+                </button>
+                <a href="{{ url_for('chat.rooms') }}" class="btn-cancel">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

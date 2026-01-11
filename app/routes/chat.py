@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, abort, flash, request, current_app
 from flask_login import login_required, current_user
 from app.models import ChatRoom, ChatMessage, FileTransaction, ChatRoomMember, User
-from app.forms import ChatMessageForm, CreateChatRoomForm
+from app.forms import ChatMessageForm, CreateChatRoomForm, DeleteChatRoomForm
 from app import db, socketio
 from datetime import datetime
 import os
@@ -75,7 +75,32 @@ def create_room():
         return redirect(url_for("chat.chat_room", room_id=room.id))
     return render_template("chat/create_room.html", form=form)
 
-@bp.route("/chat/<int:room_id>", methods=["GET", "POST"])
+@bp.route("/delete_room/<int:room_id>", methods=["GET", "POST"])
+@login_required
+def delete_room(room_id):
+    room = ChatRoom.query.get_or_404(room_id)
+    
+    # Only admins can delete rooms
+    if not current_user.is_admin():
+        abort(403)
+    
+    form = DeleteChatRoomForm()
+    if form.validate_on_submit():
+        if form.confirm_delete.data:
+            # Delete all messages, members, and the room
+            ChatMessage.query.filter_by(room_id=room.id).delete()
+            ChatRoomMember.query.filter_by(room_id=room.id).delete()
+            db.session.delete(room)
+            db.session.commit()
+            
+            flash("Chat room deleted successfully", "success")
+            return redirect(url_for("chat.rooms"))
+        else:
+            flash("Please confirm deletion", "warning")
+    
+    return render_template("chat/delete_room.html", room=room, form=form)
+
+@bp.route("/<int:room_id>", methods=["GET", "POST"])
 @login_required
 def chat_room(room_id):
     room = ChatRoom.query.get_or_404(room_id)
@@ -151,7 +176,7 @@ def chat_room(room_id):
     
     return render_template("chat/chat_room.html", room=room, messages=messages, form=form, members=members, available_users=available_users)
 
-@bp.route("/chat/<int:room_id>/add_user", methods=["POST"])
+@bp.route("/<int:room_id>/add_user", methods=["POST"])
 @login_required
 def add_user_to_room(room_id):
     if not current_user.is_admin():
@@ -187,7 +212,7 @@ def add_user_to_room(room_id):
     flash(f"Added {user.name} to the chat room", "success")
     return redirect(url_for("chat.chat_room", room_id=room_id))
 
-@bp.route("/chat/<int:room_id>/remove_user/<int:user_id>", methods=["POST"])
+@bp.route("/<int:room_id>/remove_user/<int:user_id>", methods=["POST"])
 @login_required
 def remove_user_from_room(room_id, user_id):
     if not current_user.is_admin():
@@ -200,8 +225,11 @@ def remove_user_from_room(room_id, user_id):
         flash("You cannot remove yourself from the room", "error")
         return redirect(url_for("chat.chat_room", room_id=room_id))
 
+    # Get user name before deleting the member
+    user_name = member.user.name
+    
     db.session.delete(member)
     db.session.commit()
 
-    flash(f"Removed {member.user.name} from the chat room", "success")
+    flash(f"Removed {user_name} from the chat room", "success")
     return redirect(url_for("chat.chat_room", room_id=room_id))

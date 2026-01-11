@@ -2,157 +2,777 @@
 {% block title %}File Dashboard{% endblock %}
 {% block content %}
 <style>
+/* 2026 Modern File Dashboard Styling */
+:root {
+    --primary-blue: #2563eb;
+    --accent-red: #dc2626;
+    --gold-accent: #d4af37;
+    --glass-bg: rgba(255, 255, 255, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.15);
+    --animation-speed: 0.3s;
+    --border-radius: 16px;
+    --border-radius-large: 24px;
+}
+
+/* Modern Body Styling */
+body {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Glassmorphism Container */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    transition: all var(--animation-speed) ease;
+    padding: 2rem;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-strong);
+}
+
+/* Modern Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-red) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+/* Enhanced Form Styling */
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-title i {
+    color: var(--gold-accent);
+}
+
+/* Modern Form Controls */
+.form-floating {
+    margin-bottom: 1rem;
+}
+
+.form-control {
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all var(--animation-speed) ease;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+/* Modern Buttons */
+.btn {
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    transition: all var(--animation-speed) ease;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #1d4ed8 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--gold-accent) 0%, #b45309 100%);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Enhanced Signature Canvas */
+.signature-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border: 2px dashed rgba(0, 0, 0, 0.1);
+    transition: all var(--animation-speed) ease;
+}
+
+.signature-container:hover {
+    border-color: var(--primary-blue);
+    background: rgba(255, 255, 255, 0.95);
+}
+
 .signature-canvas {
     width: 100%;
     max-width: 400px;
     height: 200px;
-    border: 1px solid #ccc;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
     cursor: crosshair;
     touch-action: none;
+    background: white;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all var(--animation-speed) ease;
+}
+
+.signature-canvas:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Modern File List */
+.file-list-container {
+    margin-top: 3rem;
+}
+
+.file-list-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-item {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all var(--animation-speed) ease;
+    box-shadow: var(--shadow-soft);
+}
+
+.file-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-strong);
+    border-color: rgba(37, 99, 235, 0.2);
+}
+
+.file-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.file-details h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.file-meta {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0.25rem 0;
+}
+
+.file-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-issued {
+    background: linear-gradient(135deg, var(--gold-accent) 0%, #d97706 100%);
+    color: white;
+}
+
+.status-available {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+}
+
+.file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .glass-card {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .file-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .file-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .signature-canvas {
+        max-width: 100%;
+        height: 150px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --glass-bg: rgba(31, 41, 55, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #92400e 100%);
+    }
+
+    .page-subtitle {
+        color: #9ca3af;
+    }
+
+    .form-label {
+        color: #e5e7eb;
+    }
+
+    .file-details h5 {
+        color: #f9fafb;
+    }
+
+    .file-meta {
+        color: #9ca3af;
+    }
 }
 </style>
-<h1>File Dashboard</h1>
-<div class="row">
-    <div class="col-md-6">
-        <h3>Upload File</h3>
-        <form action="{{ url_for('files.upload') }}" method="post" enctype="multipart/form-data">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-                {{ form.file_number.label(class="form-label") }}
-                {{ form.file_number(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ form.title.label(class="form-label") }}
-                {{ form.title(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ form.department.label(class="form-label") }}
-                {{ form.department(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ form.file.label(class="form-label") }}
-                {{ form.file(class="form-control", accept="image/*", capture="environment") }}
-            </div>
-            {{ form.submit(class="btn btn-primary") }}
-        </form>
+
+<div class="container-fluid mt-5">
+    <!-- Modern Page Header -->
+    <div class="page-header fade-in-up">
+        <h1 class="page-title">File Management Dashboard</h1>
+        <p class="page-subtitle">Secure file tracking and management system</p>
     </div>
-    <div class="col-md-6">
-        <h3>Checkout File</h3>
-        <form id="checkout-form" action="{{ url_for('files.checkout') }}" method="post">
-            {{ checkout_form.hidden_tag() }}
-            <div class="mb-3">
-                {{ checkout_form.file_number.label(class="form-label") }}
-                {{ checkout_form.file_number(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ checkout_form.purpose.label(class="form-label") }}
-                {{ checkout_form.purpose(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Signature</label>
-                <canvas id="checkout-signature" class="signature-canvas" width="400" height="200" tabindex="0" style="pointer-events: auto;"></canvas>
-                <br>
-                <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="clearCheckoutSignature()">Clear</button>
-                {{ checkout_form.checkout_signature(class="d-none") }}
-            </div>
-            <button type="button" class="btn btn-warning" onclick="submitCheckout()">Check Out File</button>
 
-        </form>
-        
-        {% if current_user.is_admin %}
-        <h3 class="mt-4">Return File</h3>
-        <form id="return-form" action="{{ url_for('files.return_file') }}" method="post">
-            {{ return_form.hidden_tag() }}
-            <div class="mb-3">
-                {{ return_form.file_number.label(class="form-label") }}
-                {{ return_form.file_number(class="form-control") }}
+    <div class="row">
+        <!-- Upload File Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="glass-card fade-in-up">
+                <div class="form-section">
+                    <h3 class="form-title">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Upload New File
+                    </h3>
+                    <form action="{{ url_for('files.upload') }}" method="post" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        <div class="form-floating mb-3">
+                            {{ form.file_number(class="form-control", placeholder="File Number") }}
+                            <label for="file_number">File Number</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            {{ form.title(class="form-control", placeholder="File Title") }}
+                            <label for="title">File Title</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            {{ form.department(class="form-control", placeholder="Department") }}
+                            <label for="department">Department</label>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">File Upload</label>
+                            {{ form.file(class="form-control", accept="image/*", capture="environment") }}
+                        </div>
+                        {{ form.submit(class="btn btn-primary w-100") }}
+                    </form>
+                </div>
             </div>
-            <div class="mb-3">
-                {{ return_form.comments.label(class="form-label") }}
-                {{ return_form.comments(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ return_form.condition.label(class="form-label") }}
-                {{ return_form.condition(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Signature</label>
-                <canvas id="return-signature" class="signature-canvas" width="400" height="200" tabindex="0" style="pointer-events: auto;"></canvas>
-                <br>
-                <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="clearReturnSignature()">Clear</button>
-                {{ return_form.return_signature(class="d-none") }}
-            </div>
-            <button type="button" class="btn btn-success" onclick="submitReturn()">Return File</button>
+        </div>
 
+        <!-- Checkout/Return Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="glass-card fade-in-up">
+                <!-- Checkout Form -->
+                <div class="form-section">
+                    <h3 class="form-title">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Checkout File
+                    </h3>
+                    <form id="checkout-form" action="{{ url_for('files.checkout') }}" method="post">
+                        {{ checkout_form.hidden_tag() }}
+                        <div class="form-floating mb-3">
+                            {{ checkout_form.file_number(class="form-control", placeholder="File Number") }}
+                            <label for="file_number">File Number</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            {{ checkout_form.purpose(class="form-control", placeholder="Purpose") }}
+                            <label for="purpose">Purpose</label>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Digital Signature</label>
+                            <div class="signature-container">
+                                <canvas id="checkout-signature" class="signature-canvas" width="400" height="200" tabindex="0" style="pointer-events: auto;"></canvas>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted">Please sign above</small>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearCheckoutSignature()">
+                                        <i class="fas fa-eraser"></i> Clear
+                                    </button>
+                                </div>
+                                {{ checkout_form.checkout_signature(class="d-none") }}
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-warning w-100" onclick="submitCheckout()">
+                            <i class="fas fa-sign-out-alt me-2"></i>Check Out File
+                        </button>
+                    </form>
+                </div>
 
-        </form>
-        {% endif %}
+                {% if current_user.is_admin %}
+                <hr class="my-4" style="border-color: rgba(0,0,0,0.1);">
+
+                <!-- Return Form -->
+                <div class="form-section">
+                    <h3 class="form-title">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Return File
+                    </h3>
+                    <form id="return-form" action="{{ url_for('files.return_file') }}" method="post">
+                        {{ return_form.hidden_tag() }}
+                        <div class="form-floating mb-3">
+                            {{ return_form.file_number(class="form-control", placeholder="File Number") }}
+                            <label for="file_number">File Number</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            {{ return_form.comments(class="form-control", placeholder="Comments") }}
+                            <label for="comments">Comments</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            {{ return_form.condition(class="form-control") }}
+                            <label for="condition">File Condition</label>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Return Signature</label>
+                            <div class="signature-container">
+                                <canvas id="return-signature" class="signature-canvas" width="400" height="200" tabindex="0" style="pointer-events: auto;"></canvas>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted">Please sign above</small>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearReturnSignature()">
+                                        <i class="fas fa-eraser"></i> Clear
+                                    </button>
+                                </div>
+                                {{ return_form.return_signature(class="d-none") }}
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-success w-100" onclick="submitReturn()">
+                            <i class="fas fa-sign-in-alt me-2"></i>Return File
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern File List -->
+    <div class="file-list-container fade-in-up">
+        <h2 class="file-list-title">
+            <i class="fas fa-folder-open"></i>
+            File Inventory
+        </h2>
+        <div class="row">
+            {% for file in files %}
+            <div class="col-lg-6 mb-3">
+                <div class="file-item" id="file-{{ file.file_number }}">
+
+                    <div class="file-info">
+                        <div class="file-details">
+                            <h5>{{ file.file_number }}</h5>
+                            <p class="file-meta">{{ file.title }} • {{ file.department }}</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="file-status"
+                                    data-file="{{ file.file_number }}">
+
+                                {% if file.is_issued %}
+                                <i class="fas fa-clock me-1"></i>Issued
+                                {% else %}
+                                <i class="fas fa-check-circle me-1"></i>Available
+                                {% endif %}
+                            </span>
+                            <div class="file-actions">
+                                <a href="{{ url_for('files.view_file', file_id=file.id) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
-<ul class="list-group mt-4">
-    {% for file in files %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-            <strong>{{ file.file_number }}</strong> - {{ file.title }} ({{ file.department }})
-            <span class="badge bg-{% if file.is_issued %}warning{% else %}success{% endif %}">
-                {% if file.is_issued %}Issued{% else %}In Storage{% endif %}
-            </span>
-        </div>
-        <a href="{{ url_for('files.view_file', file_id=file.id) }}" class="btn btn-sm btn-primary">View</a>
-    </li>
-    {% endfor %}
-</ul>
 {% endblock %}
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+
+
 <script>
-let checkoutSignaturePad;
-let returnSignaturePad;
+/* ===============================
+   Signature Pad Setup
+================================ */
 
-document.addEventListener('DOMContentLoaded', function() {
-    const checkoutCanvas = document.getElementById('checkout-signature');
-    if (checkoutCanvas) {
-        checkoutSignaturePad = new SignaturePad(checkoutCanvas);
-        checkoutSignaturePad.resizeToDisplaySize();
+let checkoutSignaturePad = null;
+let returnSignaturePad = null;
+
+/* Resize canvas for high-DPI screens */
+function resizeCanvas(canvas, pad) {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    pad.clear();
+}
+
+/* Initialize signature pads */
+document.addEventListener("DOMContentLoaded", () => {
+
+    // Checkout signature pad
+    const checkoutCanvas = document.getElementById("checkout-signature");
+    if (checkoutCanvas && window.SignaturePad) {
+        checkoutSignaturePad = new SignaturePad(checkoutCanvas, {
+            penColor: "rgb(0, 0, 0)",
+            backgroundColor: "rgba(255,255,255,0)"
+        });
+        resizeCanvas(checkoutCanvas, checkoutSignaturePad);
     }
+
+    // Return signature pad (admin only)
+    const returnCanvas = document.getElementById("return-signature");
+    if (returnCanvas && window.SignaturePad) {
+        returnSignaturePad = new SignaturePad(returnCanvas, {
+            penColor: "rgb(0, 0, 0)",
+            backgroundColor: "rgba(255,255,255,0)"
+        });
+        resizeCanvas(returnCanvas, returnSignaturePad);
+    }
+
+    // Re-resize on window resize
+    window.addEventListener("resize", () => {
+        if (checkoutCanvas && checkoutSignaturePad) {
+            resizeCanvas(checkoutCanvas, checkoutSignaturePad);
+        }
+        if (returnCanvas && returnSignaturePad) {
+            resizeCanvas(returnCanvas, returnSignaturePad);
+        }
+    });
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    const returnCanvas = document.getElementById('return-signature');
-    if (returnCanvas) {
-        returnSignaturePad = new SignaturePad(returnCanvas);
-        returnSignaturePad.resizeToDisplaySize();
-    }
-});
+/* ===============================
+   AJAX Form Submission with Immediate Status Update
+================================ */
 
+/* Update file status in the UI */
+function updateFileStatus(fileNumber, issued = true) {
+    const statusEl = document.querySelector(
+        `.file-status[data-file="${fileNumber}"]`
+    );
+
+    if (!statusEl) return;
+
+    if (issued) {
+        statusEl.className = "file-status status-issued";
+        statusEl.innerHTML = `<i class="fas fa-clock me-1"></i>Issued`;
+    } else {
+        statusEl.className = "file-status status-available";
+        statusEl.innerHTML = `<i class="fas fa-check-circle me-1"></i>Available`;
+    }
+
+    // Add visual highlight effect
+    const fileItem = statusEl.closest('.file-item');
+    if (fileItem) {
+        fileItem.style.animation = 'none';
+        setTimeout(() => {
+            fileItem.style.animation = 'pulse 0.5s ease-in-out';
+        }, 10);
+    }
+}
+
+/* Submit checkout form via AJAX */
 function submitCheckout() {
-    if (checkoutSignaturePad && checkoutSignaturePad.isEmpty()) {
-        alert('Please sign before checking out the file.');
-    } else {
-        try {
-            if (checkoutSignaturePad && !checkoutSignaturePad.isEmpty()) {
-                document.getElementById('checkout_signature').value = checkoutSignaturePad.toDataURL();
+    const form = document.getElementById("checkout-form");
+    const submitBtn = form.querySelector('button[type="button"]');
+
+    const fileNumber = form.querySelector('[name="file_number"]').value.trim();
+    const purpose = form.querySelector('[name="purpose"]').value.trim();
+    const signatureInput = document.getElementById("checkout_signature");
+
+    if (!fileNumber) {
+        showNotification("Please enter a file number.", "warning");
+        return;
+    }
+
+    if (!purpose) {
+        showNotification("Please enter a purpose.", "warning");
+        return;
+    }
+
+    if (!checkoutSignaturePad) {
+        showNotification("Signature pad not initialized.", "error");
+        return;
+    }
+
+    if (checkoutSignaturePad.isEmpty()) {
+        showNotification("Please sign before checking out the file.", "warning");
+        return;
+    }
+
+    // Show loading state
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    submitBtn.disabled = true;
+
+    try {
+        signatureInput.value = checkoutSignaturePad.toDataURL("image/png");
+
+        // Prepare form data for AJAX
+        const formData = new FormData(form);
+
+        // Submit via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-            document.getElementById('checkout-form').submit();
-        } catch (e) {
-            alert('Error submitting checkout form: ' + e.message);
-        }
+        })
+        .then(response => {
+            if (response.redirected) {
+                // Success - update UI immediately
+                updateFileStatus(fileNumber, true); // true = issued/checked out
+                showNotification("File checked out successfully!", "success");
+
+                // Reset form
+                form.reset();
+                checkoutSignaturePad.clear();
+
+                // Refresh the file list to show updated inventory
+                setTimeout(() => refreshFileList(), 500);
+
+                // Restore button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+
+                return;
+            }
+
+            return response.text().then(text => {
+                throw new Error(text || 'Checkout failed');
+            });
+        })
+        .catch(error => {
+            console.error('Checkout error:', error);
+            showNotification("Checkout failed: " + error.message, "error");
+
+            // Restore button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+
+    } catch (err) {
+        showNotification("Checkout failed: " + err.message, "error");
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 }
 
+/* Submit return form via AJAX */
 function submitReturn() {
-    if (returnSignaturePad && returnSignaturePad.isEmpty()) {
-        alert('Please sign before returning the file.');
-    } else {
-        try {
-            if (returnSignaturePad && !returnSignaturePad.isEmpty()) {
-                document.getElementById('return_signature').value = returnSignaturePad.toDataURL();
+    const form = document.getElementById("return-form");
+    const submitBtn = form.querySelector('button[type="button"]');
+
+    const fileNumber = form.querySelector('[name="file_number"]').value.trim();
+    const comments = form.querySelector('[name="comments"]').value.trim();
+    const condition = form.querySelector('[name="condition"]').value;
+    const signatureInput = document.getElementById("return_signature");
+
+    if (!fileNumber) {
+        showNotification("Please enter a file number.", "warning");
+        return;
+    }
+
+    if (!comments) {
+        showNotification("Please enter return comments.", "warning");
+        return;
+    }
+
+    if (!condition) {
+        showNotification("Please select the file condition.", "warning");
+        return;
+    }
+
+    if (!returnSignaturePad) {
+        showNotification("Return signature pad not initialized.", "error");
+        return;
+    }
+
+    if (returnSignaturePad.isEmpty()) {
+        showNotification("Please sign before returning the file.", "warning");
+        return;
+    }
+
+    // Show loading state
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    submitBtn.disabled = true;
+
+    try {
+        signatureInput.value = returnSignaturePad.toDataURL("image/png");
+
+        // Prepare form data for AJAX
+        const formData = new FormData(form);
+
+        // Submit via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-            document.getElementById('return-form').submit();
-        } catch (e) {
-            alert('Error submitting return form: ' + e.message);
-        }
+        })
+        .then(response => {
+            if (response.redirected) {
+                // Success - update UI immediately
+                updateFileStatus(fileNumber, false); // false = available/returned
+                showNotification("File returned successfully!", "success");
+
+                // Reset form
+                form.reset();
+                returnSignaturePad.clear();
+
+                // Refresh the file list to show updated inventory
+                setTimeout(() => refreshFileList(), 500);
+
+                // Restore button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+
+                return;
+            }
+
+            return response.text().then(text => {
+                throw new Error(text || 'Return failed');
+            });
+        })
+        .catch(error => {
+            console.error('Return error:', error);
+            showNotification("Return failed: " + error.message, "error");
+
+            // Restore button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+
+    } catch (err) {
+        showNotification("Return failed: " + err.message, "error");
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 }
+
+/* ===============================
+   Clear Signature Pads
+================================ */
 
 function clearCheckoutSignature() {
     if (checkoutSignaturePad) {
@@ -164,6 +784,46 @@ function clearReturnSignature() {
     if (returnSignaturePad) {
         returnSignaturePad.clear();
     }
+}
+
+/* ===============================
+   File List Refresh
+================================ */
+
+/* Refresh the file inventory list */
+function refreshFileList() {
+    fetch(window.location.href, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Extract the file list section from the HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newFileList = doc.querySelector('.file-list-container');
+
+        if (newFileList) {
+            // Replace the current file list
+            const currentFileList = document.querySelector('.file-list-container');
+            if (currentFileList) {
+                currentFileList.innerHTML = newFileList.innerHTML;
+
+                // Add fade-in animation to new items
+                const newItems = currentFileList.querySelectorAll('.file-item');
+                newItems.forEach(item => {
+                    item.style.animation = 'none';
+                    setTimeout(() => {
+                        item.style.animation = 'fadeInUp 0.5s ease-out';
+                    }, 10);
+                });
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing file list:', error);
+    });
 }
 </script>
 {% endblock %}

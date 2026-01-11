@@ -46,6 +46,11 @@ class CreateChatRoomForm(FlaskForm):
     submit = SubmitField("Create Chat Room")
 
 
+class DeleteChatRoomForm(FlaskForm):
+    confirm_delete = BooleanField("I confirm I want to delete this chat room", validators=[DataRequired()])
+    submit = SubmitField("Delete Chat Room")
+
+
 class ChatMessageForm(FlaskForm):
     message = TextAreaField(
         "Message",

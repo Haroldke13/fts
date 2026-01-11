@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_socketio import SocketIO
 from flask_jwt_extended import JWTManager
+from flask_compress import Compress
+from flask_caching import Cache
 import os
 
 from .db import db
@@ -10,6 +12,7 @@ from .forms import UploadFileForm, CheckoutFileForm, ReturnFileForm
 login_manager = LoginManager()
 jwt = JWTManager()
 socketio = SocketIO(cors_allowed_origins="*")
+cache = None
 
 def create_app():
     template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'app', 'templates')
@@ -20,6 +23,10 @@ def create_app():
     app.config["SECRET_KEY"] = os.environ.get('SECRET_KEY', 'default-secret-key')
     app.config["JWT_SECRET_KEY"] = "your-jwt-secret-key"
     app.config['WTF_CSRF_ENABLED'] = False
+
+    Compress(app)
+    global cache
+    cache = Cache(app, config={"CACHE_TYPE": "SimpleCache"})
 
     db.init_app(app)
     login_manager.init_app(app)

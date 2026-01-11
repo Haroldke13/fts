@@ -3,50 +3,498 @@
 {% block title %}Chat Rooms{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <h2>Chat Rooms</h2>
-            <div class="list-group">
-                {% for room in rooms %}
-                <a href="{{ url_for('chat.chat_room', room_id=room.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
-                    <div class="ms-2 me-auto">
-                        <div class="fw-bold">{{ room.name }}</div>
-                        {% if room.file %}
-                        <small class="text-muted">File: {{ room.file.filename }}</small>
-                        {% endif %}
-                        <div class="mt-1">
-                            <small class="text-muted me-2">{{ room.members|length }} members</small>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        {% set unread_count = room_unread_counts.get(room.id, 0) %}
-                        {% if unread_count > 0 %}
-                        <span class="badge bg-danger rounded-pill">{{ unread_count }} new</span>
-                        {% elif room.messages %}
-                        <span class="badge bg-secondary rounded-pill">{{ room.messages|length }}</span>
-                        {% endif %}
-                    </div>
+<style>
+/* PBORA (Public Benefit Organizations Regulatory Authority) Kenya Color Scheme - 2026 Modern Edition */
+:root {
+    --pbora-primary: #006D77;        /* Deep teal - authority and trust */
+    --pbora-secondary: #009639;      /* Kenyan green - national pride */
+    --pbora-accent: #FFB612;         /* Gold accent - excellence */
+    --pbora-dark: #1A365D;           /* Dark blue - professionalism */
+    --pbora-light: #F8FAFC;          /* Light background */
+    --pbora-white: #FFFFFF;          /* Pure white */
+    --pbora-gray: #64748B;           /* Professional gray */
+    --pbora-success: #059669;        /* Success green */
+    --pbora-info: #0891B2;           /* Info teal */
+    --pbora-danger: #DC2626;         /* Danger red */
+
+    /* 2026 Modern Additions */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.12);
+    --gradient-primary: linear-gradient(135deg, var(--pbora-primary) 0%, var(--pbora-info) 100%);
+    --gradient-secondary: linear-gradient(135deg, var(--pbora-secondary) 0%, var(--pbora-accent) 100%);
+    --animation-speed: 0.3s;
+    --border-radius: 16px;
+    --border-radius-large: 24px;
+}
+
+/* Modern Body Styling - Matching Dashboard Background */
+body {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    color: #1f2937;
+}
+
+/* Modern Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+/* Chat Rooms Grid */
+.rooms-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.room-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    transition: all var(--animation-speed) ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.room-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+}
+
+.room-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-strong);
+}
+
+.room-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.room-name {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.room-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-private {
+    background: linear-gradient(135deg, var(--pbora-accent) 0%, #d97706 100%);
+    color: white;
+}
+
+.badge-public {
+    background: linear-gradient(135deg, var(--pbora-success) 0%, #047857 100%);
+    color: white;
+}
+
+.room-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.room-file {
+    background: rgba(0, 109, 119, 0.1);
+    color: var(--pbora-primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.room-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.room-actions {
+    padding: 1rem 1.5rem 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+}
+
+.btn-room {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--animation-speed) ease;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-enter {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 16px rgba(0, 109, 119, 0.3);
+}
+
+.btn-enter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 109, 119, 0.4);
+}
+
+.btn-delete-room {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+.btn-delete-room:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+}
+
+/* Create Room Section */
+.create-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.create-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.create-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    transition: all var(--animation-speed) ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--pbora-primary);
+    box-shadow: 0 0 0 3px rgba(0, 109, 119, 0.1);
+}
+
+.btn-create {
+    width: 100%;
+    background: var(--gradient-secondary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all var(--animation-speed) ease;
+    box-shadow: 0 4px 16px rgba(0, 150, 57, 0.3);
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 150, 57, 0.4);
+}
+
+/* Unread Badge */
+.unread-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .rooms-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .room-card {
+        margin: 0 1rem;
+    }
+
+    .room-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .room-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .btn-room {
+        width: 100%;
+    }
+
+    .create-section {
+        margin: 2rem 1rem 0;
+        padding: 1.5rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --glass-bg: rgba(31, 41, 55, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #92400e 100%);
+    }
+
+    .page-title,
+    .room-name,
+    .create-title {
+        color: #f3f4f6;
+    }
+
+    .page-subtitle,
+    .room-meta,
+    .stat-label {
+        color: #9ca3af;
+    }
+
+    .stat-value {
+        color: #f9fafb;
+    }
+
+    .room-file {
+        background: rgba(6, 182, 212, 0.2);
+        color: #06b6d4;
+    }
+
+    .form-control {
+        background: rgba(31, 41, 55, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f3f4f6;
+    }
+
+    .form-control:focus {
+        border-color: #06b6d4;
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+    }
+}
+</style>
+
+<div class="container-fluid mt-5">
+    <!-- Modern Page Header -->
+    <div class="page-header fade-in-up">
+        <h1 class="page-title">Chat Rooms</h1>
+        <p class="page-subtitle">Connect and collaborate with team members</p>
+    </div>
+
+    <!-- Chat Rooms Grid -->
+    <div class="rooms-container">
+        {% for room in rooms %}
+        <div class="room-card fade-in-up">
+            {% set unread_count = room_unread_counts.get(room.id, 0) %}
+            {% if unread_count > 0 %}
+            <div class="unread-badge">{{ unread_count }}</div>
+            {% endif %}
+
+            <div class="room-header">
+                <div class="room-name">
+                    <i class="fas fa-comments"></i>
+                    {{ room.name }}
+                    <span class="room-badge badge-{{ 'private' if room.is_private else 'public' }}">
+                        {{ 'Private' if room.is_private else 'Public' }}
+                    </span>
+                </div>
+
+                <div class="room-meta">
+                    <span><i class="fas fa-calendar me-1"></i>{{ room.created_at.strftime('%b %d, %Y') }}</span>
+                    <span><i class="fas fa-clock me-1"></i>{{ room.created_at.strftime('%H:%M') }}</span>
+                </div>
+
+                {% if room.file %}
+                <div class="room-file">
+                    <i class="fas fa-file"></i>
+                    {{ room.file.filename }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="room-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ room.members|length }}</span>
+                    <span class="stat-label">Members</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ room.messages|length }}</span>
+                    <span class="stat-label">Messages</span>
+                </div>
+            </div>
+
+            <div class="room-actions">
+                <a href="{{ url_for('chat.chat_room', room_id=room.id) }}" class="btn-room btn-enter">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Enter Room
                 </a>
-                {% endfor %}
+                {% if current_user.is_admin() %}
+                <a href="{{ url_for('chat.delete_room', room_id=room.id) }}" class="btn-room btn-delete-room">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </a>
+                {% endif %}
             </div>
         </div>
-        <div class="col-md-4">
-            <h3>Create New Room</h3>
-            <form method="POST" action="{{ url_for('chat.create_room') }}">
-                {{ form.hidden_tag() }}
-                <div class="mb-3">
-                    {{ form.name.label(class="form-label") }}
-                    {{ form.name(class="form-control") }}
-                    {% if form.name.errors %}
-                        {% for error in form.name.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                {{ form.submit(class="btn btn-primary") }}
-            </form>
-        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Create Room Section -->
+    <div class="create-section fade-in-up">
+        <h3 class="create-title">
+            <i class="fas fa-plus-circle me-2"></i>
+            Create New Chat Room
+        </h3>
+
+        <form method="POST" action="{{ url_for('chat.create_room') }}" class="create-form">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-control") }}
+                {% if form.name.errors %}
+                    {% for error in form.name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {{ form.submit(class="btn-create") }}
+        </form>
     </div>
 </div>
 {% endblock %}

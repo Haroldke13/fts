@@ -1,34 +1,560 @@
 {% extends "base.html" %}
 {% block title %}View File{% endblock %}
 {% block content %}
-<h1>{{ file.title }}</h1>
-<p><strong>File Number:</strong> {{ file.file_number }}</p>
-<p><strong>Department:</strong> {{ file.department }}</p>
-<p><strong>Status:</strong> {% if file.is_issued %}Checked Out{% else %}Available{% endif %}</p>
+<style>
+/* PBORA (Public Benefit Organizations Regulatory Authority) Kenya Color Scheme - 2026 Modern Edition */
+:root {
+    --pbora-primary: #006D77;        /* Deep teal - authority and trust */
+    --pbora-secondary: #009639;      /* Kenyan green - national pride */
+    --pbora-accent: #FFB612;         /* Gold accent - excellence */
+    --pbora-dark: #1A365D;           /* Dark blue - professionalism */
+    --pbora-light: #F8FAFC;          /* Light background */
+    --pbora-white: #FFFFFF;          /* Pure white */
+    --pbora-gray: #64748B;           /* Professional gray */
+    --pbora-success: #059669;        /* Success green */
+    --pbora-info: #0891B2;           /* Info teal */
 
-{% if file.filename %}
-<a href="{{ url_for('files.download', filename=file.filename) }}" class="btn btn-primary">Download File</a>
-{% endif %}
+    /* 2026 Modern Additions */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.12);
+    --gradient-primary: linear-gradient(135deg, var(--pbora-primary) 0%, var(--pbora-info) 100%);
+    --gradient-secondary: linear-gradient(135deg, var(--pbora-secondary) 0%, var(--pbora-accent) 100%);
+    --animation-speed: 0.3s;
+    --border-radius: 16px;
+    --border-radius-large: 24px;
+}
 
-<h3>Transaction History</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>User</th>
-            <th>Action</th>
-            <th>Time</th>
-            <th>Purpose/Comments</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for tx in file.transactions %}
-        <tr>
-            <td>{{ tx.user.name }}</td>
-            <td>{% if tx.return_time %}Returned{% else %}Checked Out{% endif %}</td>
-            <td>{{ tx.checkout_time.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>{{ tx.purpose or tx.comments or '-' }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+/* Modern Body Styling - Matching Dashboard Background */
+body {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    color: #1f2937;
+}
+
+/* Glassmorphism Container */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    transition: all var(--animation-speed) ease;
+    padding: 2rem;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-strong);
+}
+
+/* Modern Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+/* File Details Card */
+.file-details-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.file-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.meta-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.meta-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.meta-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-available {
+    background: linear-gradient(135deg, var(--pbora-success) 0%, #047857 100%);
+    color: white;
+}
+
+.status-issued {
+    background: linear-gradient(135deg, var(--pbora-accent) 0%, #d97706 100%);
+    color: white;
+}
+
+/* Modern Buttons */
+.btn-modern {
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    transition: all var(--animation-speed) ease;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-modern:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+}
+
+.btn-primary-modern {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.btn-primary-modern:hover {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+/* Transaction History */
+.history-section {
+    margin-top: 3rem;
+}
+
+.history-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.transaction-table {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+}
+
+.table-scroll-wrapper {
+    /* Mobile table scrolling */
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll-wrapper table {
+    min-width: 850px; /* Increased for additional duration column */
+    width: 100%;
+}
+
+.table-header {
+    background: rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.table-header th {
+    padding: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    border: none;
+}
+
+.table-body tr {
+    transition: all var(--animation-speed) ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-body tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.table-body td {
+    padding: 1rem;
+    color: #374151;
+    border: none;
+    vertical-align: middle;
+}
+
+.transaction-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.type-checkout {
+    background: rgba(255, 177, 18, 0.2);
+    color: var(--pbora-accent);
+    border: 1px solid rgba(255, 177, 18, 0.3);
+}
+
+.type-return {
+    background: rgba(5, 150, 105, 0.2);
+    color: var(--pbora-success);
+    border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .glass-card {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .file-meta {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .meta-item {
+        padding: 0.75rem;
+    }
+
+    .transaction-table {
+        font-size: 0.9rem;
+        margin: 0 -1rem; /* Extend slightly beyond container for better scrolling */
+    }
+
+    .table-scroll-wrapper {
+        max-height: 60vh; /* Slightly smaller on mobile */
+        border-radius: var(--border-radius); /* Rounded corners for scroll area */
+        margin: 0 -1rem; /* Extend slightly beyond container for better scrolling */
+    }
+
+    .table-header th,
+    .table-body td {
+        padding: 0.75rem 0.5rem;
+        white-space: nowrap; /* Prevent text wrapping in cells */
+    }
+
+    .table-header th {
+        position: sticky;
+        top: 0;
+        background: rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(10px);
+        z-index: 10;
+    }
+
+    /* Improve touch scrolling */
+    .table-scroll-wrapper::-webkit-scrollbar {
+        height: 6px;
+        width: 6px;
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --glass-bg: rgba(31, 41, 55, 0.9);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #92400e 100%);
+        color: #f9fafb;
+    }
+
+    .page-title {
+        color: #f9fafb;
+    }
+
+    .page-subtitle {
+        color: #d1d5db;
+    }
+
+    .file-title {
+        color: #f9fafb;
+    }
+
+    .meta-label {
+        color: #9ca3af;
+    }
+
+    .meta-value {
+        color: #f9fafb;
+    }
+
+    .history-title {
+        color: #f9fafb;
+    }
+
+    .table-header th {
+        color: #f9fafb;
+    }
+
+    .table-body td {
+        color: #e5e7eb;
+    }
+}
+</style>
+
+<div class="container-fluid mt-5">
+    <!-- Modern Page Header -->
+    <div class="page-header fade-in-up">
+        <h1 class="page-title">File Details</h1>
+        <p class="page-subtitle">Comprehensive file information and transaction history</p>
+    </div>
+
+    <!-- File Details Card -->
+    <div class="file-details-card fade-in-up">
+        <h2 class="file-title">
+            <i class="fas fa-file-alt"></i>
+            {{ file.title }}
+        </h2>
+
+        <div class="file-meta">
+            <div class="meta-item">
+                <div class="meta-label">File Number</div>
+                <div class="meta-value">{{ file.file_number }}</div>
+            </div>
+
+            <div class="meta-item">
+                <div class="meta-label">Department</div>
+                <div class="meta-value">{{ file.department }}</div>
+            </div>
+
+            <div class="meta-item">
+                <div class="meta-label">Status</div>
+                <div class="meta-value">
+                    <span class="status-badge {% if file.is_issued %}status-issued{% else %}status-available{% endif %}">
+                        <i class="fas fa-{% if file.is_issued %}clock{% else %}check-circle{% endif %}"></i>
+                        {% if file.is_issued %}Checked Out{% else %}Available{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            {% if file.filename %}
+            <div class="meta-item">
+                <div class="meta-label">Actions</div>
+                <div class="meta-value">
+                    <a href="{{ url_for('files.download', filename=file.filename) }}" class="btn-modern btn-primary-modern">
+                        <i class="fas fa-download"></i>
+                        Download File
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="history-section fade-in-up">
+        <h3 class="history-title">
+            <i class="fas fa-history"></i>
+            Transaction History
+        </h3>
+
+        <div class="transaction-table">
+            <div class="table-scroll-wrapper">
+                <table class="table table-hover mb-0">
+                    <thead class="table-header">
+                        <tr>
+                            <th><i class="fas fa-user me-1"></i>User</th>
+                            <th><i class="fas fa-exchange-alt me-1"></i>Action</th>
+                            <th><i class="fas fa-calendar-plus me-1"></i>Checkout Time</th>
+                            <th><i class="fas fa-calendar-check me-1"></i>Return Time</th>
+                            <th><i class="fas fa-clock me-1"></i>Duration</th>
+                            <th><i class="fas fa-comment me-1"></i>Purpose/Comments</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body">
+                        {% for tx in file.transactions %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-2">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    {{ tx.user.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="transaction-type {% if tx.return_time %}type-return{% else %}type-checkout{% endif %}">
+                                    <i class="fas fa-{% if tx.return_time %}undo{% else %}sign-out-alt{% endif %}"></i>
+                                    {% if tx.return_time %}Returned{% else %}Checked Out{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ tx.checkout_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if tx.return_time %}
+                                    {{ tx.return_time.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tx.return_time %}
+                                    {% set duration = (tx.return_time - tx.checkout_time).total_seconds() %}
+                                    {% set days = (duration // 86400) | int %}
+                                    {% set hours = ((duration % 86400) // 3600) | int %}
+                                    {% set minutes = ((duration % 3600) // 60) | int %}
+                                    {% set seconds = (duration % 60) | int %}
+                                    
+                                    <span class="duration-text">
+                                        {% if days > 0 %}
+                                            {{ days }} day{{ 's' if days != 1 else '' }}{% if hours > 0 or minutes > 0 %}, {% endif %}
+                                        {% endif %}
+                                        {% if hours > 0 %}
+                                            {{ hours }} hour{{ 's' if hours != 1 else '' }}{% if minutes > 0 or (seconds > 0 and days == 0) %}, {% endif %}
+                                        {% endif %}
+                                        {% if minutes > 0 or (days == 0 and hours == 0) %}
+                                            {{ minutes }} minute{{ 's' if minutes != 1 else '' }}{% if seconds > 0 and days == 0 and hours == 0 %}, {% endif %}
+                                        {% endif %}
+                                        {% if seconds > 0 and days == 0 and hours == 0 %}
+                                            {{ seconds }} second{{ 's' if seconds != 1 else '' }}
+                                        {% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="checked-out-indicator">
+                                        <i class="fas fa-clock"></i>
+                                        Still checked out
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ tx.purpose or tx.comments or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Avatar Circle for Users */
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+}
+
+/* Duration Column Styling */
+.duration-text {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.checked-out-indicator {
+    color: #d97706;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+</style>
 {% endblock %}

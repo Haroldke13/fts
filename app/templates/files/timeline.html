@@ -1,10 +1,410 @@
 {% extends "base.html" %}
 {% block title %}File Timeline{% endblock %}
 {% block content %}
-<h1>File Timeline</h1>
-<ul>
-    {% for event in events %}
-    <li>{{ event.timestamp }}: {{ event.action }} on {{ event.filename }}</li>
-    {% endfor %}
-</ul>
+<style>
+/* PBORA (Public Benefit Organizations Regulatory Authority) Kenya Color Scheme - 2026 Modern Edition */
+:root {
+    --pbora-primary: #006D77;        /* Deep teal - authority and trust */
+    --pbora-secondary: #009639;      /* Kenyan green - national pride */
+    --pbora-accent: #FFB612;         /* Gold accent - excellence */
+    --pbora-dark: #1A365D;           /* Dark blue - professionalism */
+    --pbora-light: #F8FAFC;          /* Light background */
+    --pbora-white: #FFFFFF;          /* Pure white */
+    --pbora-gray: #64748B;           /* Professional gray */
+    --pbora-success: #059669;        /* Success green */
+    --pbora-info: #0891B2;           /* Info teal */
+
+    /* 2026 Modern Additions */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.12);
+    --gradient-primary: linear-gradient(135deg, var(--pbora-primary) 0%, var(--pbora-info) 100%);
+    --gradient-secondary: linear-gradient(135deg, var(--pbora-secondary) 0%, var(--pbora-accent) 100%);
+    --animation-speed: 0.3s;
+    --border-radius: 16px;
+    --border-radius-large: 24px;
+}
+
+/* Modern Body Styling - Matching Dashboard Background */
+body {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    color: #1f2937;
+}
+
+/* Modern Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+/* Timeline Container */
+.timeline-container {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    padding: 2rem 0;
+}
+
+.timeline-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #006D77, #009639);
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    z-index: 2;
+}
+
+.timeline-item.left {
+    margin-right: 50%;
+    padding-right: 2rem;
+    text-align: right;
+}
+
+.timeline-item.right {
+    margin-left: 50%;
+    padding-left: 2rem;
+    text-align: left;
+}
+
+.timeline-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    padding: 1.5rem;
+    transition: all var(--animation-speed) ease;
+    cursor: pointer;
+}
+
+.timeline-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-strong);
+}
+
+.timeline-dot {
+    position: absolute;
+    top: 1.5rem;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    border: 3px solid var(--pbora-white);
+    z-index: 3;
+}
+
+.timeline-item.left .timeline-dot {
+    right: -8px;
+}
+
+.timeline-item.right .timeline-dot {
+    left: -8px;
+}
+
+.timeline-time {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.timeline-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-description {
+    color: #374151;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.timeline-meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.timeline-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+
+.icon-checkout {
+    background: linear-gradient(135deg, var(--pbora-accent) 0%, #d97706 100%);
+    color: white;
+}
+
+.icon-return {
+    background: linear-gradient(135deg, var(--pbora-success) 0%, #047857 100%);
+    color: white;
+}
+
+.icon-upload {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+/* File Info Card */
+.file-info-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.file-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.detail-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.detail-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .timeline-line {
+        left: 20px;
+    }
+
+    .timeline-item.left,
+    .timeline-item.right {
+        margin-left: 60px;
+        margin-right: 0;
+        padding-left: 1rem;
+        padding-right: 0;
+        text-align: left;
+    }
+
+    .timeline-item.left .timeline-dot,
+    .timeline-item.right .timeline-dot {
+        left: -8px;
+        right: auto;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --glass-bg: rgba(31, 41, 55, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #92400e 100%);
+    }
+
+    .page-subtitle {
+        color: #9ca3af;
+    }
+
+    .timeline-description {
+        color: #e5e7eb;
+    }
+
+    .file-title {
+        color: #f3f4f6;
+    }
+
+    .detail-label {
+        color: #9ca3af;
+    }
+
+    .detail-value {
+        color: #e5e7eb;
+    }
+}
+</style>
+
+<div class="container-fluid mt-5">
+    <!-- Modern Page Header -->
+    <div class="page-header fade-in-up">
+        <h1 class="page-title">File Timeline</h1>
+        <p class="page-subtitle">Complete history of file transactions and activities</p>
+    </div>
+
+    <!-- File Info Card -->
+    <div class="file-info-card fade-in-up">
+        <h2 class="file-title">
+            <i class="fas fa-file-alt"></i>
+            {{ file.title }}
+        </h2>
+        <div class="file-details">
+            <div class="detail-item">
+                <div class="detail-label">File Number</div>
+                <div class="detail-value">{{ file.file_number }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Department</div>
+                <div class="detail-value">{{ file.department }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Current Status</div>
+                <div class="detail-value">
+                    <span class="status-badge {% if file.is_issued %}status-issued{% else %}status-available{% endif %}">
+                        <i class="fas fa-{% if file.is_issued %}clock{% else %}check-circle{% endif %}"></i>
+                        {% if file.is_issued %}Checked Out{% else %}Available{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-container">
+        <div class="timeline-line"></div>
+
+        {% for transaction in transactions %}
+        <div class="timeline-item {% if loop.index % 2 == 0 %}left{% else %}right{% endif %} fade-in-up">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+                <div class="timeline-time">
+                    <i class="fas fa-calendar me-1"></i>
+                    {{ transaction.checkout_time.strftime('%B %d, %Y at %H:%M') }}
+                </div>
+
+                <div class="timeline-title">
+                    <span class="timeline-icon {% if transaction.return_time %}icon-return{% else %}icon-checkout{% endif %}">
+                        <i class="fas fa-{% if transaction.return_time %}undo{% else %}sign-out-alt{% endif %}"></i>
+                    </span>
+                    {% if transaction.return_time %}File Returned{% else %}File Checked Out{% endif %}
+                </div>
+
+                <div class="timeline-description">
+                    <strong>{{ transaction.user.name }}</strong>
+                    {% if transaction.return_time %}
+                        returned the file
+                        {% if transaction.comments %}with comment: "{{ transaction.comments }}"{% endif %}
+                    {% else %}
+                        checked out the file
+                        {% if transaction.purpose %}for: "{{ transaction.purpose }}"{% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="timeline-meta">
+                    <span><i class="fas fa-user me-1"></i>{{ transaction.user.name }}</span>
+                    {% if transaction.return_time %}
+                    <span><i class="fas fa-clock me-1"></i>Duration: {{ (transaction.return_time - transaction.checkout_time).total_seconds() | round | int }}s</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-available {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+}
+
+.status-issued {
+    background: linear-gradient(135deg, #FFB612 0%, #d97706 100%);
+    color: white;
+}
+</style>
 {% endblock %}

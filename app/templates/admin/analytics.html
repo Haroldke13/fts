@@ -1,17 +1,188 @@
 {% extends "base.html" %}
 {% block title %}Analytics{% endblock %}
 {% block content %}
-<h1>Analytics</h1>
-<canvas id="chart"></canvas>
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-chart-line me-2"></i>System Analytics
+            </h1>
+        </div>
+    </div>
+    
+    <!-- Overview Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>System Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="overview-chart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Charts -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exchange-alt me-2"></i>File Transfers per User
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="transfers-chart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>Messages per User
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="messages-chart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building me-2"></i>Files per Department
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dept-chart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Activity Over Time (Last 7 Days)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="activity-chart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const ctx = document.getElementById('chart').getContext('2d');
-const chartData = {{ chart_data | tojson | safe }} || { labels: [], datasets: [] };
+// Overview Chart
+const overviewCtx = document.getElementById('overview-chart').getContext('2d');
+const overviewData = {{ chart_data | tojson | safe }} || { labels: [], datasets: [] };
 try {
-    new Chart(ctx, { type: 'line', data: chartData, options: {} });
+    new Chart(overviewCtx, { 
+        type: 'bar', 
+        data: overviewData, 
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
 } catch (e) {
-    console.error('Chart error:', e);
-    document.getElementById('chart').innerHTML = '<p>Unable to load chart.</p>';
+    console.error('Overview chart error:', e);
+    document.getElementById('overview-chart').innerHTML = '<p>Unable to load chart.</p>';
+}
+
+// File Transfers per User Chart
+const transfersCtx = document.getElementById('transfers-chart').getContext('2d');
+const transfersData = {{ transfers_chart | tojson | safe }} || { labels: [], datasets: [] };
+try {
+    new Chart(transfersCtx, { 
+        type: 'bar', 
+        data: transfersData, 
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+} catch (e) {
+    console.error('Transfers chart error:', e);
+    document.getElementById('transfers-chart').innerHTML = '<p>Unable to load chart.</p>';
+}
+
+// Messages per User Chart
+const messagesCtx = document.getElementById('messages-chart').getContext('2d');
+const messagesData = {{ messages_chart | tojson | safe }} || { labels: [], datasets: [] };
+try {
+    new Chart(messagesCtx, { 
+        type: 'bar', 
+        data: messagesData, 
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+} catch (e) {
+    console.error('Messages chart error:', e);
+    document.getElementById('messages-chart').innerHTML = '<p>Unable to load chart.</p>';
+}
+
+// Files per Department Chart
+const deptCtx = document.getElementById('dept-chart').getContext('2d');
+const deptData = {{ dept_chart | tojson | safe }} || { labels: [], datasets: [] };
+try {
+    new Chart(deptCtx, { 
+        type: 'pie', 
+        data: deptData, 
+        options: {
+            responsive: true
+        }
+    });
+} catch (e) {
+    console.error('Department chart error:', e);
+    document.getElementById('dept-chart').innerHTML = '<p>Unable to load chart.</p>';
+}
+
+// Activity Over Time Chart
+const activityCtx = document.getElementById('activity-chart').getContext('2d');
+const activityData = {{ activity_chart | tojson | safe }} || { labels: [], datasets: [] };
+try {
+    new Chart(activityCtx, { 
+        type: 'line', 
+        data: activityData, 
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+} catch (e) {
+    console.error('Activity chart error:', e);
+    document.getElementById('activity-chart').innerHTML = '<p>Unable to load chart.</p>';
 }
 </script>
 {% endblock %}

@@ -19,3 +19,5 @@ africastalking
 Pillow
 requests
 email_validator
+Flask-Caching
+flask-compress

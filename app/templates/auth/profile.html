@@ -1,56 +1,283 @@
 {% extends "base.html" %}
 {% block title %}Profile{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0"><i class="fas fa-user me-2"></i>My Profile</h4>
-            </div>
-            <div class="card-body">
-                <!-- User Information -->
-                <div class="mb-4">
-                    <h5 class="card-title">User Information</h5>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <p><strong>Full Name:</strong> {{ current_user.name }}</p>
-                        </div>
-                        <div class="col-sm-6">
-                            <p><strong>Designation:</strong> {{ current_user.designation }}</p>
-                        </div>
+<style>
+/* PBORA (Public Benefit Organizations Regulatory Authority) Kenya Color Scheme - 2026 Modern Edition */
+/* Updated to use beige, grey, and cool colors for easy-on-the-eyes design */
+:root {
+    --pbora-primary: #6B7280;        /* Cool grey - professional and calm */
+    --pbora-secondary: #9CA3AF;      /* Light grey - subtle accent */
+    --pbora-accent: #D1D5DB;         /* Beige grey - warm neutral */
+    --pbora-dark: #374151;           /* Dark grey - text and depth */
+    --pbora-light: #F9FAFB;          /* Off-white - clean background */
+    --pbora-white: #FFFFFF;          /* Pure white */
+    --pbora-gray: #6B7280;           /* Medium grey */
+    --pbora-success: #10B981;        /* Muted green - success */
+    --pbora-info: #6B7280;           /* Cool grey - info */
+    --pbora-muted: #F3F4F6;          /* Light beige grey */
+
+    /* 2026 Modern Additions - Muted and Subdued */
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(209, 213, 219, 0.3);
+    --shadow-soft: 0 4px 20px rgba(107, 114, 128, 0.08);
+    --shadow-strong: 0 8px 32px rgba(107, 114, 128, 0.12);
+    --gradient-primary: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    --gradient-secondary: linear-gradient(135deg, #D1D5DB 0%, #9CA3AF 100%);
+    --animation-speed: 0.3s;
+    --border-radius: 12px;
+    --border-radius-large: 16px;
+}
+
+/* Modern Body Styling - Matching Dashboard Background */
+body {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    color: var(--pbora-dark);
+}
+
+/* Glassmorphism Container */
+.glass-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    transition: all var(--animation-speed) ease;
+}
+
+.glass-container:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-strong);
+}
+
+/* Modern Card Styling - Muted */
+.card {
+    border: none;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(8px);
+    background: var(--glass-bg);
+    transition: all var(--animation-speed) ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-strong);
+}
+
+.card-header {
+    background: var(--pbora-muted);
+    border: none;
+    border-radius: var(--border-radius-large) var(--border-radius-large) 0 0 !important;
+    backdrop-filter: blur(8px);
+    color: var(--pbora-dark);
+    font-weight: 600;
+}
+
+.card-body {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+}
+
+/* Modern Button Styling - Muted */
+.btn {
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    transition: all var(--animation-speed) ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.1);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.15);
+}
+
+.btn-primary {
+    background: var(--pbora-gray);
+    color: var(--pbora-white);
+}
+
+.btn-primary:hover {
+    background: var(--pbora-dark);
+}
+
+/* Modern Form Styling - Muted */
+.form-control {
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(209, 213, 219, 0.4);
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    transition: all var(--animation-speed) ease;
+}
+
+.form-control:focus {
+    border-color: var(--pbora-gray);
+    box-shadow: 0 0 0 0.2rem rgba(107, 114, 128, 0.25);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.form-label {
+    color: var(--pbora-dark);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Information Display Styling */
+.info-section {
+    background: var(--pbora-muted);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(209, 213, 219, 0.4);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--pbora-gray);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    color: var(--pbora-dark);
+    font-weight: 500;
+}
+
+/* Section Headers */
+.section-header {
+    color: var(--pbora-dark);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--pbora-accent);
+}
+
+/* Divider Styling */
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(209, 213, 219, 0.5), transparent);
+    margin: 2rem 0;
+    border: none;
+}
+
+/* Animation for content entrance */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.info-section {
+    animation: slideInUp 0.8s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .col-md-8 {
+        padding: 15px;
+    }
+
+    .card {
+        border-radius: var(--border-radius);
+    }
+
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+</style>
+
+<div class="container-fluid min-vh-100 py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-container p-0">
+                <div class="card border-0 shadow-none">
+                    <div class="card-header text-center py-4">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user me-2"></i>My Profile
+                        </h4>
+                        <p class="text-muted mt-2 mb-0 small">Manage your account information and security settings.</p>
                     </div>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <p><strong>Email:</strong> {{ current_user.email }}</p>
+                    <div class="card-body p-4">
+                        <!-- User Information -->
+                        <div class="info-section">
+                            <h5 class="section-header">
+                                <i class="fas fa-id-card me-2"></i>User Information
+                            </h5>
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value">{{ current_user.name }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Designation</span>
+                                <span class="info-value">{{ current_user.designation }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Email</span>
+                                <span class="info-value">{{ current_user.email }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Role</span>
+                                <span class="info-value">{{ current_user.role.title() }}</span>
+                            </div>
                         </div>
-                        <div class="col-sm-6">
-                            <p><strong>Role:</strong> {{ current_user.role.title() }}</p>
+
+                        <hr class="divider">
+
+                        <!-- Change Password Form -->
+                        <div>
+                            <h5 class="section-header">
+                                <i class="fas fa-lock me-2"></i>Change Password
+                            </h5>
+                            <form method="post">
+                                {{ form.hidden_tag() }}
+                                <div class="mb-4">
+                                    {{ form.current_password.label(class="form-label") }}
+                                    {{ form.current_password(class="form-control", placeholder="Enter current password") }}
+                                </div>
+                                <div class="mb-4">
+                                    {{ form.new_password.label(class="form-label") }}
+                                    {{ form.new_password(class="form-control", placeholder="Enter new password") }}
+                                </div>
+                                <div class="mb-4">
+                                    {{ form.confirm_password.label(class="form-label") }}
+                                    {{ form.confirm_password(class="form-control", placeholder="Confirm new password") }}
+                                </div>
+                                <div class="d-grid">
+                                    {{ form.submit(class="btn btn-primary py-3") }}
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-
-                <hr>
-
-                <!-- Change Password Form -->
-                <h5 class="card-title">Change Password</h5>
-                <form method="post">
-                    {{ form.hidden_tag() }}
-                    <div class="mb-3">
-                        {{ form.current_password.label(class="form-label") }}
-                        {{ form.current_password(class="form-control", placeholder="Enter current password") }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.new_password.label(class="form-label") }}
-                        {{ form.new_password(class="form-control", placeholder="Enter new password") }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.confirm_password.label(class="form-label") }}
-                        {{ form.confirm_password(class="form-control", placeholder="Confirm new password") }}
-                    </div>
-                    <div class="d-grid">
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
             </div>
         </div>
     </div>

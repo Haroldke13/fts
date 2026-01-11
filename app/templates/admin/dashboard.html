@@ -1,82 +1,564 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Users</h5>
-                <p class="card-text">{{ user_count }}</p>
+<style>
+/* PBORA (Public Benefit Organizations Regulatory Authority) Kenya Color Scheme - 2026 Modern Edition */
+:root {
+    --pbora-primary: #006D77;        /* Deep teal - authority and trust */
+    --pbora-secondary: #009639;      /* Kenyan green - national pride */
+    --pbora-accent: #FFB612;         /* Gold accent - excellence */
+    --pbora-dark: #1A365D;           /* Dark blue - professionalism */
+    --pbora-light: #F8FAFC;          /* Light background */
+    --pbora-white: #FFFFFF;          /* Pure white */
+    --pbora-gray: #64748B;           /* Professional gray */
+    --pbora-success: #059669;        /* Success green */
+    --pbora-info: #0891B2;           /* Info teal */
+
+    /* 2026 Modern Additions */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.12);
+    --gradient-primary: linear-gradient(135deg, var(--pbora-primary) 0%, var(--pbora-info) 100%);
+    --gradient-secondary: linear-gradient(135deg, var(--pbora-secondary) 0%, var(--pbora-accent) 100%);
+    --animation-speed: 0.3s;
+    --border-radius: 16px;
+    --border-radius-large: 24px;
+}
+
+/* Modern Body Styling - Matching Dashboard Background */
+body {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    color: #1f2937;
+}
+
+/* Modern Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+/* Modern Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+    padding: 2rem;
+    transition: all var(--animation-speed) ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-strong);
+}
+
+.stat-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.stat-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.stat-description {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Section Headers */
+.section-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-subtitle {
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+/* Modern Table Styling */
+.table-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 2rem;
+}
+
+.table-responsive-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 60vh;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive-wrapper table {
+    min-width: 600px;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-header {
+    background: rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.table-header th {
+    padding: 1.25rem 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    border: none;
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+.table-body tr {
+    transition: all var(--animation-speed) ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-body tr:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.table-body td {
+    padding: 1rem;
+    color: #374151;
+    border: none;
+    vertical-align: middle;
+}
+
+/* Modern Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.btn-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--animation-speed) ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary-modern {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 16px rgba(0, 109, 119, 0.3);
+}
+
+.btn-primary-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 109, 119, 0.4);
+}
+
+.btn-secondary-modern {
+    background: var(--gradient-secondary);
+    color: white;
+    box-shadow: 0 4px 16px rgba(0, 150, 57, 0.3);
+}
+
+.btn-secondary-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 150, 57, 0.4);
+}
+
+.btn-info-modern {
+    background: linear-gradient(135deg, var(--pbora-info) 0%, #0284c7 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 20px;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-issued {
+    background: linear-gradient(135deg, var(--pbora-accent) 0%, #d97706 100%);
+    color: white;
+}
+
+.status-available {
+    background: linear-gradient(135deg, var(--pbora-success) 0%, #047857 100%);
+    color: white;
+}
+
+/* Modern Modal */
+.modal-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-strong);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--glass-border);
+    padding: 1.5rem;
+}
+
+.modal-title {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--glass-border);
+    padding: 1.5rem;
+}
+
+/* Avatar Circle for Users */
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+
+    .table-responsive-wrapper {
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-soft);
+        margin: 0 -1rem;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar {
+        height: 6px;
+        width: 6px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn-modern {
+        justify-content: center;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --glass-bg: rgba(31, 41, 55, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #92400e 100%);
+    }
+
+    .page-title,
+    .section-title,
+    .modal-title {
+        color: #f3f4f6;
+    }
+
+    .page-subtitle,
+    .section-subtitle,
+    .stat-description {
+        color: #9ca3af;
+    }
+
+    .stat-title {
+        color: #d1d5db;
+    }
+
+    .stat-value {
+        color: #f9fafb;
+    }
+
+    .table-header th {
+        color: #f3f4f6;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .table-body td {
+        color: #e5e7eb;
+    }
+
+    .table-body tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+</style>
+<div class="container-fluid mt-5">
+    <!-- Modern Page Header -->
+    <div class="page-header fade-in-up">
+        <h1 class="page-title">Admin Dashboard</h1>
+        <p class="page-subtitle">Comprehensive system overview and management tools</p>
+    </div>
+
+    <!-- Modern Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card fade-in-up">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
             </div>
+            <div class="stat-title">Total Users</div>
+            <div class="stat-value">{{ user_count }}</div>
+            <div class="stat-description">Registered system users</div>
+        </div>
+
+        <div class="stat-card fade-in-up">
+            <div class="stat-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-title">Total Files</div>
+            <div class="stat-value">{{ file_count }}</div>
+            <div class="stat-description">Files in the system</div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Files</h5>
-                <p class="card-text">{{ file_count }}</p>
-            </div>
+    <!-- Current File Checkouts Section -->
+    <div class="section-header fade-in-up">
+        <h2 class="section-title">
+            <i class="fas fa-clock"></i>
+            Current File Checkouts
+        </h2>
+        <p class="section-subtitle">Files currently checked out by users</p>
+    </div>
+
+    <div class="table-container fade-in-up">
+        <div class="table-responsive-wrapper">
+            <table class="table table-striped">
+                <thead class="table-header">
+                    <tr>
+                        <th><i class="fas fa-hashtag me-1"></i>File Number</th>
+                        <th><i class="fas fa-file-alt me-1"></i>Title</th>
+                        <th><i class="fas fa-user me-1"></i>User</th>
+                        <th><i class="fas fa-calendar me-1"></i>Checkout Time</th>
+                        <th><i class="fas fa-signature me-1"></i>Signature</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                    {% for checkout in current_checkouts %}
+                    <tr>
+                        <td>
+                            <span class="fw-bold text-primary">{{ checkout.file.file_number }}</span>
+                        </td>
+                        <td>{{ checkout.file.title }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-2">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                {{ checkout.user.name }}
+                            </div>
+                        </td>
+                        <td>{{ checkout.checkout_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if checkout.checkout_signature %}
+                            <button class="btn btn-info-modern" data-bs-toggle="modal" data-bs-target="#signatureModal{{ checkout.id }}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            {% else %}
+                            <span class="text-muted">No signature</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-</div>
-<div class="mt-4">
-    <h3>Current File Checkouts</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>File Number</th>
-                <th>Title</th>
-                <th>User</th>
-                <th>Checkout Time</th>
-                <th>Signature</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for checkout in current_checkouts %}
-            <tr>
-                <td>{{ checkout.file.file_number }}</td>
-                <td>{{ checkout.file.title }}</td>
-                <td>{{ checkout.user.name }}</td>
-                <td>{{ checkout.checkout_time }}</td>
-                <td>
-                    {% if checkout.checkout_signature %}
-                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#signatureModal{{ checkout.id }}">View</button>
-                    {% else %}
-                    No signature
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-<div class="mt-4">
-    <h3>All Files</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>File Number</th>
-                <th>Title</th>
-                <th>Department</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for file in files %}
-            <tr>
-                <td>{{ file.file_number }}</td>
-                <td>{{ file.title }}</td>
-                <td>{{ file.department }}</td>
-                <td>{% if file.is_issued %}Issued{% else %}Available{% endif %}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-<div class="mt-4">
-    <a href="{{ url_for('admin.analytics') }}" class="btn btn-primary me-2">View Analytics</a>
-    <a href="{{ url_for('admin.live_monitor') }}" class="btn btn-secondary">Live Monitor</a>
-</div>
+    <!-- All Files Section -->
+    <div class="section-header fade-in-up">
+        <h2 class="section-title">
+            <i class="fas fa-folder-open"></i>
+            All Files
+        </h2>
+        <p class="section-subtitle">Complete file inventory and status overview</p>
+    </div>
+
+    <div class="table-container fade-in-up">
+        <div class="table-responsive-wrapper">
+            <table class="table table-striped">
+                <thead class="table-header">
+                    <tr>
+                        <th><i class="fas fa-hashtag me-1"></i>File Number</th>
+                        <th><i class="fas fa-file-alt me-1"></i>Title</th>
+                        <th><i class="fas fa-building me-1"></i>Department</th>
+                        <th><i class="fas fa-info-circle me-1"></i>Status</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                    {% for file in files %}
+                    <tr>
+                        <td>
+                            <span class="fw-bold text-primary">{{ file.file_number }}</span>
+                        </td>
+                        <td>{{ file.title }}</td>
+                        <td>{{ file.department }}</td>
+                        <td>
+                            <span class="status-badge {% if file.is_issued %}status-issued{% else %}status-available{% endif %}">
+                                <i class="fas fa-{% if file.is_issued %}clock{% else %}check-circle{% endif %}"></i>
+                                {% if file.is_issued %}Issued{% else %}Available{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Action Buttons -->
+    <div class="action-buttons fade-in-up">
+        <a href="{{ url_for('admin.analytics') }}" class="btn-modern btn-primary-modern">
+            <i class="fas fa-chart-bar"></i>
+            View Analytics
+        </a>
+        <a href="{{ url_for('admin.live_monitor') }}" class="btn-modern btn-secondary-modern">
+            <i class="fas fa-desktop"></i>
+            Live Monitor
+        </a>
+    </div>
 
 <!-- Signature Modals -->
 {% for checkout in current_checkouts %}
