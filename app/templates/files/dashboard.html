@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}File Dashboard{% endblock %}
 {% block content %}
+<!-- Include enhanced UI utilities -->
+<script src="{{ url_for('static', filename='js/ui-enhancements.js') }}"></script>
 <style>
 /* 2026 Modern File Dashboard Styling */
 :root {
@@ -347,31 +349,48 @@ body {
     <div class="row">
         <!-- Upload File Section -->
         <div class="col-lg-6 mb-4">
-            <div class="glass-card fade-in-up">
+            <div class="content-section glass-card fade-in-up">
                 <div class="form-section">
                     <h3 class="form-title">
-                        <i class="fas fa-cloud-upload-alt"></i>
+                        <i class="fas fa-cloud-upload-alt me-2"></i>
                         Upload New File
                     </h3>
-                    <form action="{{ url_for('files.upload') }}" method="post" enctype="multipart/form-data">
+                    <p class="text-muted mb-4">Add a new file to the tracking system with all necessary details.</p>
+                    <form action="{{ url_for('files.upload') }}" method="post" enctype="multipart/form-data" onsubmit="return validateForm(this)">
                         {{ form.hidden_tag() }}
-                        <div class="form-floating mb-3">
-                            {{ form.file_number(class="form-control", placeholder="File Number") }}
-                            <label for="file_number">File Number</label>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    {{ form.file_number(class="form-control", placeholder="File Number", required="required") }}
+                                    <label for="file_number">File Number <span class="text-danger">*</span></label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    {{ form.title(class="form-control", placeholder="File Title", required="required") }}
+                                    <label for="title">File Title <span class="text-danger">*</span></label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    {{ form.department(class="form-control", placeholder="Department", required="required") }}
+                                    <label for="department">Department <span class="text-danger">*</span></label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">File Upload <span class="text-danger">*</span></label>
+                                <div class="file-upload-area border-2 border-dashed border-primary rounded p-4 text-center bg-light" style="cursor: pointer;" onclick="document.getElementById('file').click()">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                    <p class="mb-2">Click to upload or drag and drop</p>
+                                    <p class="text-muted small">Supported formats: Images, PDFs (Max 10MB)</p>
+                                    <div id="file-preview" class="mt-3"></div>
+                                </div>
+                                {{ form.file(class="form-control d-none", accept="image/*,.pdf", required="required", id="file") }}
+                            </div>
+                            <div class="col-12">
+                                {{ form.submit(class="btn btn-primary w-100 btn-lg", onclick="submitWithLoading(this.form, 'Uploading...')") }}
+                            </div>
                         </div>
-                        <div class="form-floating mb-3">
-                            {{ form.title(class="form-control", placeholder="File Title") }}
-                            <label for="title">File Title</label>
-                        </div>
-                        <div class="form-floating mb-3">
-                            {{ form.department(class="form-control", placeholder="Department") }}
-                            <label for="department">Department</label>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">File Upload</label>
-                            {{ form.file(class="form-control", accept="image/*", capture="environment") }}
-                        </div>
-                        {{ form.submit(class="btn btn-primary w-100") }}
                     </form>
                 </div>
             </div>
@@ -825,5 +844,116 @@ function refreshFileList() {
         console.error('Error refreshing file list:', error);
     });
 }
+
+// Enhanced file upload functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const filePreview = document.getElementById('file-preview');
+    const uploadArea = document.querySelector('.file-upload-area');
+
+    if (fileInput && filePreview) {
+        // Enhanced file preview
+        createFilePreview(fileInput, {
+            maxSize: 10 * 1024 * 1024, // 10MB
+            allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'],
+            previewContainer: filePreview,
+            onSuccess: function(file) {
+                uploadArea.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+                uploadArea.classList.remove('border-primary', 'bg-light');
+                showNotification(`File "${file.name}" selected successfully (${formatFileSize(file.size)})`, 'success');
+            },
+            onError: function(error) {
+                uploadArea.classList.add('border-danger', 'bg-danger', 'bg-opacity-10');
+                uploadArea.classList.remove('border-primary', 'bg-light');
+                setTimeout(() => {
+                    uploadArea.classList.remove('border-danger', 'bg-danger', 'bg-opacity-10');
+                    uploadArea.classList.add('border-primary', 'bg-light');
+                }, 3000);
+            }
+        });
+
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            uploadArea.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+        }
+
+        function unhighlight(e) {
+            uploadArea.classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+        }
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        }
+    }
+
+    // Enhanced form validation feedback
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid') && this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    });
+
+    // Auto-refresh file list every 30 seconds
+    setInterval(refreshFileList, 30000);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + U for upload focus
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+            e.preventDefault();
+            const fileInput = document.getElementById('file');
+            if (fileInput) fileInput.click();
+        }
+
+        // Ctrl/Cmd + R for refresh
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            refreshFileList();
+            showNotification('File list refreshed', 'info');
+        }
+    });
+
+    // Announce page load to screen readers
+    announceToScreenReader('File dashboard loaded successfully');
+});
 </script>
 {% endblock %}
