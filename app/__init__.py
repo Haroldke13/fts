@@ -31,7 +31,7 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     jwt.init_app(app)
-    socketio.init_app(app)
+    # socketio.init_app(app)  # Disabled for testing
 
     from .models import User, FileRecord, FileTransaction, ChatRoom, ChatMessage, AuditLog
 

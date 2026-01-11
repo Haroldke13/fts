@@ -1,3 +1,4 @@
+from fileinput import filename
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, send_from_directory, jsonify
 from flask_login import login_required, current_user
 from app.models import FileRecord, FileTransaction
@@ -20,7 +21,7 @@ def dashboard():
     return render_template('files/dashboard.html', files=files, form=form, checkout_form=checkout_form, return_form=return_form)
 
 
-@bp.route("/return", methods=["POST"])
+"""@bp.route("/return", methods=["POST"])
 @login_required
 @admin_required
 def return_file():
@@ -104,8 +105,72 @@ def return_file():
                 for error in errors:
                     flash(f"{field}: {error}", "danger")
         return redirect(url_for("files.dashboard"))
+"""
 
-@bp.route("/checkout", methods=["POST"])
+@bp.route("/return", methods=["POST"])
+@login_required
+@admin_required
+def return_file():
+    form = ReturnFileForm()
+    
+    if form.validate_on_submit():
+        file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+        if not file:
+            flash("File not found", "danger")
+            return redirect(url_for("files.dashboard"))
+        
+        # Find the active transaction for this file
+        tx = FileTransaction.query.filter_by(
+            file_id=file.id,
+            return_time=None
+        ).first()
+        
+        if not tx:
+            flash("File is not currently checked out", "danger")
+            return redirect(url_for("files.dashboard"))
+        
+        try:
+            # Process the return
+            tx.return_time = datetime.utcnow()
+            tx.comments = form.comments.data
+            tx.condition = form.condition.data
+            # tx.return_signature = form.return_signature.data
+            tx.returned_to_admin_id = current_user.id
+            file.is_issued = False
+            
+            db.session.commit()
+            
+            flash(f"File {file.file_number} returned successfully", "success")
+            
+            # Clear any cached dashboard data
+            cache.delete_memoized(dashboard)
+            
+            # Emit socket event
+            # from app.chat_socket import emit_file_update
+            # emit_file_update(tx, "return")
+            
+            # Log the action
+            from app.utils.audit import log_action
+            log_action(f"File {file.file_number} returned")
+            
+            return redirect(url_for("files.dashboard"))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error returning file: {str(e)}', 'danger')
+            return redirect(url_for("files.dashboard"))
+    
+    # If form validation fails, show errors
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f"{field}: {error}", "danger")
+    
+    return redirect(url_for("files.dashboard"))
+
+
+
+
+"""@bp.route("/checkout", methods=["POST"])
 @login_required
 def checkout():
     form = CheckoutFileForm()
@@ -184,6 +249,58 @@ def checkout():
                 for error in errors:
                     flash(f"{field}: {error}", "danger")
         return redirect(url_for("files.dashboard"))
+"""
+
+@bp.route("/checkout", methods=["POST"])
+@login_required
+def checkout():
+    form = CheckoutFileForm()
+
+    if not form.validate_on_submit():
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "danger")
+        return redirect(url_for("files.dashboard"))
+
+    file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+
+    if not file:
+        flash("File not found", "danger")
+        return redirect(url_for("files.dashboard"))
+
+    if file.is_issued:
+        flash("File is already checked out", "warning")
+        return redirect(url_for("files.dashboard"))
+
+    try:
+        tx = FileTransaction(
+            file_id=file.id,
+            user_id=current_user.id,
+            purpose=form.purpose.data,
+            checkout_signature=form.checkout_signature.data
+        )
+
+        file.is_issued = True
+        db.session.add(tx)
+        db.session.commit()
+
+        cache.delete_memoized(dashboard)
+
+        # from app.chat_socket import emit_file_update
+        # emit_file_update(tx, "checkout")
+
+        from app.utils.audit import log_action
+        log_action(f"File {file.file_number} checked out by {current_user.name}")
+
+        flash("File checked out successfully", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error checking out file: {str(e)}", "danger")
+
+    return redirect(url_for("files.dashboard"))
+
+
 
 
 @bp.route("/files/scan/<file_number>")
@@ -215,7 +332,7 @@ def file_timeline(file_id):
 def download_file(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
-@bp.route('/upload', methods=['POST'])
+"""@bp.route('/upload', methods=['POST'])
 @login_required
 def upload():
     form = UploadFileForm()
@@ -225,37 +342,35 @@ def upload():
             flash('File number already exists', 'danger')
             return redirect(url_for("files.dashboard"))
         
-        file = form.file.data
-        if file:
-            try:
+        try:
+            # Create FileRecord regardless of file upload
+            file_record = FileRecord(
+                file_number=form.file_number.data,
+                title=form.title.data,
+                department=form.department.data
+            )
+            db.session.add(file_record)
+            db.session.commit()
+
+            file = form.file.data
+            if file:
                 filename = file.filename
                 file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
                 file.save(file_path)
 
-                # Create FileRecord
-                file_record = FileRecord(
-                    file_number=form.file_number.data,
-                    title=form.title.data,
-                    department=form.department.data
-                )
-                db.session.add(file_record)
-                db.session.commit()
-
-                # After saving file, create version
+                # Create version
                 version_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'versions', filename)
                 os.makedirs(version_dir, exist_ok=True)
                 version_path = os.path.join(version_dir, f"{datetime.now().isoformat()}_{filename}")
                 shutil.copy(file_path, version_path)
 
-                # Clear any cached dashboard data
-                cache.delete_memoized(dashboard)
+            # Clear any cached dashboard data
+            cache.delete_memoized(dashboard)
 
-                flash('File uploaded and recorded', 'success')
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Error uploading file: {str(e)}', 'danger')
-        else:
-            flash('No file selected', 'danger')
+            flash('File record created successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating file record: {str(e)}', 'danger')
     else:
         for field, errors in form.errors.items():
             for error in errors:
@@ -264,3 +379,143 @@ def upload():
 
     flash('Upload failed', 'error')
     return redirect(url_for('files.dashboard'))
+
+"""
+
+""" 2 @bp.route('/upload', methods=['POST'])
+@login_required
+def upload():
+    form = UploadFileForm()
+
+    if not form.validate_on_submit():
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "danger")
+        return redirect(url_for("files.dashboard"))
+
+    # Check duplicate file number
+    existing_file = FileRecord.query.filter_by(
+        file_number=form.file_number.data
+    ).first()
+
+    if existing_file:
+        flash("File number already exists", "danger")
+        return redirect(url_for("files.dashboard"))
+
+    try:
+        # Create DB record
+        file_record = FileRecord(
+            file_number=form.file_number.data,
+            title=form.title.data,
+            department=form.department.data
+        )
+
+        db.session.add(file_record)
+        db.session.commit()
+
+        # Handle optional file upload
+        uploaded_file = form.file.data
+        if uploaded_file:
+            filename = secure_filename(uploaded_file.filename)
+
+            upload_dir = current_app.config['UPLOAD_FOLDER']
+            os.makedirs(upload_dir, exist_ok=True)
+
+            file_path = os.path.join(upload_dir, filename)
+            uploaded_file.save(file_path)
+
+            # Versioning
+            version_dir = os.path.join(upload_dir, 'versions', filename)
+            os.makedirs(version_dir, exist_ok=True)
+
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            version_path = os.path.join(version_dir, f"{timestamp}_{filename}")
+            shutil.copy(file_path, version_path)
+
+        # Clear cached dashboard
+        cache.delete_memoized(dashboard)
+
+        flash("File record created successfully", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Upload failed: {str(e)}", "danger")
+
+    return redirect(url_for("files.dashboard"))
+"""
+
+from werkzeug.utils import secure_filename
+
+@bp.route('/upload', methods=['POST'])
+@login_required
+def upload():
+    form = UploadFileForm()
+
+    if not form.validate_on_submit():
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "danger")
+        return redirect(url_for("files.dashboard"))
+
+    # Check duplicate file number
+    if FileRecord.query.filter_by(file_number=form.file_number.data).first():
+        flash("File number already exists", "danger")
+        return redirect(url_for("files.dashboard"))
+
+    uploaded_file = form.file.data
+    filename = None
+    
+    
+
+    if uploaded_file:
+        filename = secure_filename(uploaded_file.filename)
+
+        # 🔒 Prevent duplicate filename in DB
+        if FileRecord.query.filter_by(filename=filename).first():
+            flash("A file with this filename already exists", "danger")
+            return redirect(url_for("files.dashboard"))
+
+        upload_dir = current_app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_dir, filename)
+
+        # 🔒 Prevent duplicate filename in filesystem
+        if os.path.exists(file_path):
+            flash("A file with this name already exists on the server", "danger")
+            return redirect(url_for("files.dashboard"))
+
+    
+
+    try:
+        # Create record FIRST
+        file_record = FileRecord(
+            file_number=form.file_number.data,
+            name=form.name.data,
+            department=form.department.data,
+            filename=filename
+        )
+
+        db.session.add(file_record)
+        db.session.commit()
+
+        # Save file AFTER DB commit
+        if uploaded_file:
+            os.makedirs(upload_dir, exist_ok=True)
+            uploaded_file.save(file_path)
+
+            # Versioning
+            version_dir = os.path.join(upload_dir, 'versions', filename)
+            os.makedirs(version_dir, exist_ok=True)
+
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            version_path = os.path.join(version_dir, f"{timestamp}_{filename}")
+            shutil.copy(file_path, version_path)
+
+        cache.delete_memoized(dashboard)
+        flash("File record created successfully", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Upload failed: {str(e)}", "danger")
+
+    return redirect(url_for("files.dashboard"))
+

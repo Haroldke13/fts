@@ -22,7 +22,7 @@ class User(db.Model, UserMixin):
         return self.role == "admin"
     
     
-class FileRecord(db.Model):
+"""class FileRecord(db.Model):
     __tablename__ = "files"
     id = db.Column(db.Integer, primary_key=True)
     # Identifier used in government institutions
@@ -34,8 +34,25 @@ class FileRecord(db.Model):
     is_issued = db.Column(db.Boolean, default=False)
     # Relationship to movement records
     transactions = db.relationship("FileTransaction", backref="file", lazy=True)
-    
-    
+    """
+
+
+
+class FileRecord(db.Model):
+    __tablename__ = "files"
+
+    id = db.Column(db.Integer, primary_key=True)
+    file_number = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(200), nullable=True)
+    department = db.Column(db.String(120), nullable=True)
+
+    # NEW: store uploaded filename
+    filename = db.Column(db.String(255), nullable=True, unique=True)
+
+    is_issued = db.Column(db.Boolean, default=False)
+
+    transactions = db.relationship("FileTransaction", backref="file", lazy=True)
+ 
     
 class FileTransaction(db.Model):
 

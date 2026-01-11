@@ -44,13 +44,14 @@ def send_message(data):
 
 # File checkout/return live update
 def emit_file_update(tx, action):
-    socketio.emit("admin_update", {
-        "type": "file",
-        "file_number": tx.file.file_number,
-        "user": tx.user.name,
-        "action": action,
-        "timestamp": tx.checkout_time.isoformat() if action=="checkout" else tx.return_time.isoformat()
-    })
+    if socketio:
+        socketio.emit("admin_update", {
+            "type": "file",
+            "file_number": tx.file.file_number,
+            "user": tx.user.name,
+            "action": action,
+            "timestamp": tx.checkout_time.isoformat() if action=="checkout" else tx.return_time.isoformat()
+        })
 
 @socketio.on('monitor_files')
 def monitor_files():
