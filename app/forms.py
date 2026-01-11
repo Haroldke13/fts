@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField,SearchField,SelectField,DateTimeLocalField, FileField
-from wtforms.validators import DataRequired, Email, Length
+from wtforms.validators import DataRequired, Email, Length, EqualTo
 
 class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
@@ -12,12 +12,15 @@ class LoginForm(FlaskForm):
 class CheckoutFileForm(FlaskForm):
     file_number = StringField("File Number", validators=[DataRequired()])
     purpose = TextAreaField("Purpose of taking file", validators=[DataRequired()])
+    checkout_signature = StringField("Checkout Signature")
     submit = SubmitField("Check Out File")
     
     
 class ReturnFileForm(FlaskForm):
     file_number = StringField("File Number", validators=[DataRequired()])
     comments = TextAreaField("Comments on return")
+    condition = SelectField("File Condition", choices=[("good", "Good"), ("fair", "Fair"), ("damaged", "Damaged"), ("lost", "Lost")], default="good")
+    return_signature = StringField("Return Signature")
     submit = SubmitField("Return File")
     
     
@@ -52,3 +55,10 @@ class ChatMessageForm(FlaskForm):
     voice_note = FileField("Voice Note")
     video_note = FileField("Video Note")
     submit = SubmitField("Send")
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField("Current Password", validators=[DataRequired()])
+    new_password = PasswordField("New Password", validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField("Confirm New Password", validators=[DataRequired(), EqualTo('new_password', message='Passwords must match')])
+    submit = SubmitField("Change Password")

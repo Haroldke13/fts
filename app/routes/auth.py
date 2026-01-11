@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.forms import LoginForm, CreateUserForm
+from app.forms import LoginForm, CreateUserForm, ChangePasswordForm
 from app.models import User
 from app import db
 
@@ -40,3 +40,17 @@ def signup():
 def logout():
     logout_user()
     return redirect(url_for("auth.login"))
+
+@bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if check_password_hash(current_user.password, form.current_password.data):
+            current_user.password = generate_password_hash(form.new_password.data)
+            db.session.commit()
+            flash("Password changed successfully", "success")
+            return redirect(url_for("auth.profile"))
+        else:
+            flash("Current password is incorrect", "danger")
+    return render_template("auth/profile.html", form=form)

@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block title %}File Dashboard{% endblock %}
 {% block content %}
+<style>
+.signature-canvas {
+    width: 100%;
+    max-width: 400px;
+    height: 200px;
+    border: 1px solid #ccc;
+    cursor: crosshair;
+    touch-action: none;
+}
+</style>
 <h1>File Dashboard</h1>
 <div class="row">
     <div class="col-md-6">
@@ -28,7 +38,7 @@
     </div>
     <div class="col-md-6">
         <h3>Checkout File</h3>
-        <form action="{{ url_for('files.checkout') }}" method="post">
+        <form id="checkout-form" action="{{ url_for('files.checkout') }}" method="post">
             {{ checkout_form.hidden_tag() }}
             <div class="mb-3">
                 {{ checkout_form.file_number.label(class="form-label") }}
@@ -38,12 +48,20 @@
                 {{ checkout_form.purpose.label(class="form-label") }}
                 {{ checkout_form.purpose(class="form-control") }}
             </div>
-            {{ checkout_form.submit(class="btn btn-warning") }}
+            <div class="mb-3">
+                <label class="form-label">Signature</label>
+                <canvas id="checkout-signature" class="signature-canvas" width="400" height="200" tabindex="0" style="pointer-events: auto;"></canvas>
+                <br>
+                <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="clearCheckoutSignature()">Clear</button>
+                {{ checkout_form.checkout_signature(class="d-none") }}
+            </div>
+            <button type="button" class="btn btn-warning" onclick="submitCheckout()">Check Out File</button>
+
         </form>
         
         {% if current_user.is_admin %}
         <h3 class="mt-4">Return File</h3>
-        <form action="{{ url_for('files.return_file') }}" method="post">
+        <form id="return-form" action="{{ url_for('files.return_file') }}" method="post">
             {{ return_form.hidden_tag() }}
             <div class="mb-3">
                 {{ return_form.file_number.label(class="form-label") }}
@@ -53,7 +71,20 @@
                 {{ return_form.comments.label(class="form-label") }}
                 {{ return_form.comments(class="form-control") }}
             </div>
-            {{ return_form.submit(class="btn btn-success") }}
+            <div class="mb-3">
+                {{ return_form.condition.label(class="form-label") }}
+                {{ return_form.condition(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Signature</label>
+                <canvas id="return-signature" class="signature-canvas" width="400" height="200" tabindex="0" style="pointer-events: auto;"></canvas>
+                <br>
+                <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="clearReturnSignature()">Clear</button>
+                {{ return_form.return_signature(class="d-none") }}
+            </div>
+            <button type="button" class="btn btn-success" onclick="submitReturn()">Return File</button>
+
+
         </form>
         {% endif %}
     </div>
@@ -64,11 +95,75 @@
         <div>
             <strong>{{ file.file_number }}</strong> - {{ file.title }} ({{ file.department }})
             <span class="badge bg-{% if file.is_issued %}warning{% else %}success{% endif %}">
-                {% if file.is_issued %}Issued{% else %}Available{% endif %}
+                {% if file.is_issued %}Issued{% else %}In Storage{% endif %}
             </span>
         </div>
         <a href="{{ url_for('files.view_file', file_id=file.id) }}" class="btn btn-sm btn-primary">View</a>
     </li>
     {% endfor %}
 </ul>
+{% endblock %}
+{% block scripts %}
+<script>
+let checkoutSignaturePad;
+let returnSignaturePad;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const checkoutCanvas = document.getElementById('checkout-signature');
+    if (checkoutCanvas) {
+        checkoutSignaturePad = new SignaturePad(checkoutCanvas);
+        checkoutSignaturePad.resizeToDisplaySize();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const returnCanvas = document.getElementById('return-signature');
+    if (returnCanvas) {
+        returnSignaturePad = new SignaturePad(returnCanvas);
+        returnSignaturePad.resizeToDisplaySize();
+    }
+});
+
+function submitCheckout() {
+    if (checkoutSignaturePad && checkoutSignaturePad.isEmpty()) {
+        alert('Please sign before checking out the file.');
+    } else {
+        try {
+            if (checkoutSignaturePad && !checkoutSignaturePad.isEmpty()) {
+                document.getElementById('checkout_signature').value = checkoutSignaturePad.toDataURL();
+            }
+            document.getElementById('checkout-form').submit();
+        } catch (e) {
+            alert('Error submitting checkout form: ' + e.message);
+        }
+    }
+}
+
+function submitReturn() {
+    if (returnSignaturePad && returnSignaturePad.isEmpty()) {
+        alert('Please sign before returning the file.');
+    } else {
+        try {
+            if (returnSignaturePad && !returnSignaturePad.isEmpty()) {
+                document.getElementById('return_signature').value = returnSignaturePad.toDataURL();
+            }
+            document.getElementById('return-form').submit();
+        } catch (e) {
+            alert('Error submitting return form: ' + e.message);
+        }
+    }
+}
+
+function clearCheckoutSignature() {
+    if (checkoutSignaturePad) {
+        checkoutSignaturePad.clear();
+    }
+}
+
+function clearReturnSignature() {
+    if (returnSignaturePad) {
+        returnSignaturePad.clear();
+    }
+}
+</script>
 {% endblock %}

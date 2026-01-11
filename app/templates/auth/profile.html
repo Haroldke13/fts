@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0"><i class="fas fa-user me-2"></i>My Profile</h4>
+            </div>
+            <div class="card-body">
+                <!-- User Information -->
+                <div class="mb-4">
+                    <h5 class="card-title">User Information</h5>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <p><strong>Full Name:</strong> {{ current_user.name }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p><strong>Designation:</strong> {{ current_user.designation }}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <p><strong>Email:</strong> {{ current_user.email }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p><strong>Role:</strong> {{ current_user.role.title() }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Change Password Form -->
+                <h5 class="card-title">Change Password</h5>
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.current_password.label(class="form-label") }}
+                        {{ form.current_password(class="form-control", placeholder="Enter current password") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.new_password.label(class="form-label") }}
+                        {{ form.new_password(class="form-control", placeholder="Enter new password") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.confirm_password.label(class="form-label") }}
+                        {{ form.confirm_password(class="form-control", placeholder="Confirm new password") }}
+                    </div>
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

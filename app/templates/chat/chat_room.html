@@ -527,6 +527,28 @@
 .message-status.read {
     color: var(--pbora-primary);
 }
+
+/* Mobile responsiveness improvements */
+@media (max-width: 768px) {
+    .message-bubble {
+        max-width: 85%;
+    }
+    .chat-image, .chat-video {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+    .media-player.video-player {
+        max-width: 100%;
+    }
+}
+
+/* Scale down media capture icons by 70% (to 30% of original size) */
+.btn i.fas.fa-camera,
+.btn i.fas.fa-microphone,
+.btn i.fas.fa-video {
+    transform: scale(0.3);
+}
 </style>
 
 <div class="container-fluid mt-4">

@@ -28,6 +28,7 @@
                 <th>Title</th>
                 <th>User</th>
                 <th>Checkout Time</th>
+                <th>Signature</th>
             </tr>
         </thead>
         <tbody>
@@ -37,6 +38,13 @@
                 <td>{{ checkout.file.title }}</td>
                 <td>{{ checkout.user.name }}</td>
                 <td>{{ checkout.checkout_time }}</td>
+                <td>
+                    {% if checkout.checkout_signature %}
+                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#signatureModal{{ checkout.id }}">View</button>
+                    {% else %}
+                    No signature
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -69,6 +77,29 @@
     <a href="{{ url_for('admin.analytics') }}" class="btn btn-primary me-2">View Analytics</a>
     <a href="{{ url_for('admin.live_monitor') }}" class="btn btn-secondary">Live Monitor</a>
 </div>
+
+<!-- Signature Modals -->
+{% for checkout in current_checkouts %}
+{% if checkout.checkout_signature %}
+<div class="modal fade" id="signatureModal{{ checkout.id }}" tabindex="-1" aria-labelledby="signatureModalLabel{{ checkout.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="signatureModalLabel{{ checkout.id }}">Checkout Signature - {{ checkout.file.file_number }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ checkout.checkout_signature }}" alt="Checkout Signature" class="img-fluid" style="max-width: 100%; max-height: 400px;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
 {% endblock %}
 
 

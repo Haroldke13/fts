@@ -26,24 +26,41 @@ def dashboard():
 def return_file():
     form = ReturnFileForm()
     if form.validate_on_submit():
-        file = FileRecord.query.filter_by(file_number=form.file_number.data).first_or_404()
+        file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+        if not file:
+            flash("File not found", "danger")
+            return redirect(url_for("files.dashboard"))
         # Find the active transaction for this file (any user, since admin can return any file)
         tx = FileTransaction.query.filter_by(
             file_id=file.id,
             return_time=None
-        ).first_or_404()
+        ).first()
+        if not tx:
+            flash("File is not currently checked out", "danger")
+            return redirect(url_for("files.dashboard"))
         
-        tx.return_time = datetime.utcnow()
-        tx.comments = form.comments.data
-        file.is_issued = False
-        db.session.commit()
-        flash("File returned", "success")
+        try:
+            tx.return_time = datetime.utcnow()
+            tx.comments = form.comments.data
+            tx.condition = form.condition.data
+            tx.return_signature = form.return_signature.data
+            tx.returned_to_admin_id = current_user.id
+            file.is_issued = False
+            db.session.commit()
+            flash("File returned", "success")
+            
+            from app.chat_socket import emit_file_update
+            emit_file_update(tx, "return")
+            from app.utils.audit import log_action
+            log_action(f"File {file.file_number} returned")
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error returning file: {str(e)}', 'danger')
         
-        from app.chat_socket import emit_file_update
-        emit_file_update(tx, "return")
-        from app.utils.audit import log_action
-        log_action(f"File {file.file_number} returned")
-        
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "danger")
     return redirect(url_for("files.dashboard"))
 
 @bp.route("/checkout", methods=["POST"])
@@ -51,27 +68,39 @@ def return_file():
 def checkout():
     form = CheckoutFileForm()
     if form.validate_on_submit():
-        file = FileRecord.query.filter_by(file_number=form.file_number.data).first_or_404()
+        file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+        if not file:
+            flash("File not found", "danger")
+            return redirect(url_for("files.dashboard"))
         if file.is_issued:
             flash("File is already checked out", "error")
             return redirect(url_for("files.dashboard"))
         
-        tx = FileTransaction(
-            file_id=file.id,
-            user_id=current_user.id,
-            checkout_time=datetime.utcnow(),
-            purpose=form.purpose.data
-        )
-        file.is_issued = True
-        db.session.add(tx)
-        db.session.commit()
-        flash("File checked out", "success")
+        try:
+            tx = FileTransaction(
+                file_id=file.id,
+                user_id=current_user.id,
+                checkout_time=datetime.utcnow(),
+                purpose=form.purpose.data,
+                checkout_signature=form.checkout_signature.data
+            )
+            file.is_issued = True
+            db.session.add(tx)
+            db.session.commit()
+            flash("File checked out", "success")
+            
+            from app.chat_socket import emit_file_update
+            emit_file_update(tx, "checkout")
+            from app.utils.audit import log_action
+            log_action(f"File {file.file_number} checked out by {current_user.name}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error checking out file: {str(e)}', 'danger')
         
-        from app.chat_socket import emit_file_update
-        emit_file_update(tx, "checkout")
-        from app.utils.audit import log_action
-        log_action(f"File {file.file_number} checked out by {current_user.name}")
-        
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "danger")
     return redirect(url_for("files.dashboard"))
 
 
@@ -109,29 +138,44 @@ def download_file(filename):
 def upload():
     form = UploadFileForm()
     if form.validate_on_submit():
+        existing_file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+        if existing_file:
+            flash('File number already exists', 'danger')
+            return redirect(url_for("files.dashboard"))
+        
         file = form.file.data
         if file:
-            filename = file.filename
-            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
+            try:
+                filename = file.filename
+                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
 
-            # Create FileRecord
-            file_record = FileRecord(
-                file_number=form.file_number.data,
-                title=form.title.data,
-                department=form.department.data
-            )
-            db.session.add(file_record)
-            db.session.commit()
+                # Create FileRecord
+                file_record = FileRecord(
+                    file_number=form.file_number.data,
+                    title=form.title.data,
+                    department=form.department.data
+                )
+                db.session.add(file_record)
+                db.session.commit()
 
-            # After saving file, create version
-            version_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'versions', filename)
-            os.makedirs(version_dir, exist_ok=True)
-            version_path = os.path.join(version_dir, f"{datetime.now().isoformat()}_{filename}")
-            shutil.copy(file_path, version_path)
+                # After saving file, create version
+                version_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'versions', filename)
+                os.makedirs(version_dir, exist_ok=True)
+                version_path = os.path.join(version_dir, f"{datetime.now().isoformat()}_{filename}")
+                shutil.copy(file_path, version_path)
 
-            flash('File uploaded and recorded', 'success')
-            return redirect(url_for('files.dashboard'))
+                flash('File uploaded and recorded', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error uploading file: {str(e)}', 'danger')
+        else:
+            flash('No file selected', 'danger')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "danger")
+    return redirect(url_for("files.dashboard"))
 
     flash('Upload failed', 'error')
     return redirect(url_for('files.dashboard'))

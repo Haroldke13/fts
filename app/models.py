@@ -55,6 +55,11 @@ class FileTransaction(db.Model):
     # Remarks
     purpose = db.Column(db.String(250))
     comments = db.Column(db.String(250))
+    # Signatures
+    checkout_signature = db.Column(db.Text)  # Base64 encoded signature image
+    return_signature = db.Column(db.Text)    # Base64 encoded signature image
+    # File condition on return
+    condition = db.Column(db.String(50), default="good")
 
     issued_by = db.relationship("User", foreign_keys=[issued_by_admin_id])
     returned_to = db.relationship("User", foreign_keys=[returned_to_admin_id])
