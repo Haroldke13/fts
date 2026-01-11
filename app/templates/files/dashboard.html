@@ -4,25 +4,26 @@
 <!-- Include enhanced UI utilities -->
 <script src="{{ url_for('static', filename='js/ui-enhancements.js') }}"></script>
 <style>
-/* 2026 Modern File Dashboard Styling */
+/* 2026 Modern File Dashboard Styling - Light Mobile Friendly */
 :root {
     --primary-blue: #2563eb;
     --accent-red: #dc2626;
     --gold-accent: #d4af37;
-    --glass-bg: rgba(255, 255, 255, 0.25);
-    --glass-border: rgba(255, 255, 255, 0.18);
-    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
-    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.15);
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(200, 210, 220, 0.4);
+    --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.12);
     --animation-speed: 0.3s;
     --border-radius: 16px;
     --border-radius-large: 24px;
 }
 
-/* Modern Body Styling */
+/* Modern Body Styling - Light Background */
 body {
-    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f5f6f7 100%);
     min-height: 100vh;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1f2937;
 }
 
 /* Glassmorphism Container */
@@ -60,7 +61,7 @@ body {
 }
 
 .page-subtitle {
-    color: #64748b;
+    color: #4b5563;
     font-size: 1.1rem;
     font-weight: 400;
 }
@@ -108,7 +109,7 @@ body {
 
 .form-label {
     font-weight: 600;
-    color: #374151;
+    color: #1f2937;
     margin-bottom: 0.5rem;
 }
 
@@ -154,10 +155,10 @@ body {
 
 /* Enhanced Signature Canvas */
 .signature-container {
-    background: rgba(255, 255, 255, 0.9);
+    background: #ffffff;
     border-radius: var(--border-radius);
     padding: 1rem;
-    border: 2px dashed rgba(0, 0, 0, 0.1);
+    border: 2px dashed #d1d5db;
     transition: all var(--animation-speed) ease;
 }
 
@@ -170,12 +171,12 @@ body {
     width: 100%;
     max-width: 400px;
     height: 200px;
-    border: 2px solid rgba(0, 0, 0, 0.1);
+    border: 2px solid #e5e7eb;
     border-radius: var(--border-radius);
     cursor: crosshair;
     touch-action: none;
-    background: white;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: #fafbfc;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
     transition: all var(--animation-speed) ease;
 }
 
@@ -201,14 +202,14 @@ body {
 }
 
 .file-item {
-    background: var(--glass-bg);
-    backdrop-filter: blur(15px);
-    border: 1px solid var(--glass-border);
+    background: #ffffff;
+    backdrop-filter: blur(5px);
+    border: 1px solid #e5e7eb;
     border-radius: var(--border-radius);
     padding: 1.5rem;
     margin-bottom: 1rem;
     transition: all var(--animation-speed) ease;
-    box-shadow: var(--shadow-soft);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .file-item:hover {
@@ -232,7 +233,7 @@ body {
 }
 
 .file-meta {
-    color: #6b7280;
+    color: #4b5563;
     font-size: 0.9rem;
     margin: 0.25rem 0;
 }
@@ -310,31 +311,32 @@ body {
     }
 }
 
-/* Dark Mode Support */
+/* Dark Mode Support - Keep Light Theme for Better Visibility */
 @media (prefers-color-scheme: dark) {
     :root {
-        --glass-bg: rgba(31, 41, 55, 0.8);
-        --glass-border: rgba(255, 255, 255, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --glass-border: rgba(200, 210, 220, 0.4);
     }
 
     body {
-        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #92400e 100%);
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f5f6f7 100%);
+        color: #1f2937;
     }
 
     .page-subtitle {
-        color: #9ca3af;
+        color: #4b5563;
     }
 
     .form-label {
-        color: #e5e7eb;
+        color: #1f2937;
     }
 
     .file-details h5 {
-        color: #f9fafb;
+        color: #1f2937;
     }
 
     .file-meta {
-        color: #9ca3af;
+        color: #4b5563;
     }
 }
 </style>
