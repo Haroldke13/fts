@@ -58,7 +58,6 @@ class ChatMessageForm(FlaskForm):
     )
     image = FileField("Image")
     voice_note = FileField("Voice Note")
-    video_note = FileField("Video Note")
     submit = SubmitField("Send")
 
 

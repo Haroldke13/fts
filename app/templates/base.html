@@ -244,6 +244,54 @@
         // Initial check in case page is loaded with scroll position
         toggleScrollButton();
     });
+
+    // Real-time notification updates
+    {% if current_user.is_authenticated %}
+    const socket = io();
+    
+    // Join user-specific room for notifications
+    socket.emit('join_user_room', { user_id: {{ current_user.id }} });
+    
+    // Handle notification updates
+    socket.on('notification_update', function(data) {
+        updateChatNotificationBadge(data.total_unread);
+    });
+    
+    function updateChatNotificationBadge(unreadCount) {
+        const chatLink = document.querySelector('a[href*="chat/rooms"]');
+        if (chatLink) {
+            // Remove existing badge
+            const existingBadge = chatLink.querySelector('.badge');
+            if (existingBadge) {
+                existingBadge.remove();
+            }
+            
+            // Add new badge if there are unread messages
+            if (unreadCount > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-danger ms-1';
+                badge.textContent = unreadCount;
+                chatLink.appendChild(badge);
+                
+                // Add visual indicator with animation
+                chatLink.style.animation = 'notificationPulse 2s ease-in-out';
+                setTimeout(() => {
+                    chatLink.style.animation = '';
+                }, 2000);
+            }
+        }
+    }
+    
+    // Add CSS animation for notification pulse
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes notificationPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    `;
+    document.head.appendChild(style);
+    {% endif %}
     </script>
 
     {% block scripts %}{% endblock %}

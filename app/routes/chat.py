@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, abort, flash, r
 from flask_login import login_required, current_user
 from app.models import ChatRoom, ChatMessage, FileTransaction, ChatRoomMember, User
 from app.forms import ChatMessageForm, CreateChatRoomForm, DeleteChatRoomForm
-from app import db, socketio
+from app import db, socketio, cache
 from datetime import datetime
 import os
 
@@ -30,6 +30,7 @@ def can_access_chat(user, room):
 
 @bp.route("/rooms")
 @login_required
+@cache.cached(False)
 def rooms():
     rooms = ChatRoom.query.all()
     form = CreateChatRoomForm()
@@ -111,7 +112,7 @@ def chat_room(room_id):
     form = ChatMessageForm()
     if form.validate_on_submit():
         # Check if at least one field is provided (message or media)
-        has_content = (form.message.data and form.message.data.strip()) or form.image.data or form.voice_note.data or form.video_note.data
+        has_content = (form.message.data and form.message.data.strip()) or form.image.data or form.voice_note.data
         
         if not has_content:
             flash("Please provide a message or upload media", "error")
@@ -139,29 +140,27 @@ def chat_room(room_id):
             filepath = os.path.join(chat_uploads, filename)
             form.voice_note.data.save(filepath)
             msg.voice_filename = filename
-            
-        if form.video_note.data:
-            filename = f"video_{room.id}_{current_user.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{form.video_note.data.filename}"
-            filepath = os.path.join(chat_uploads, filename)
-            form.video_note.data.save(filepath)
-            msg.video_filename = filename
         
         db.session.add(msg)
         db.session.commit()
         
-        # Emit message to room via Socket.IO for real-time updates
+        # Emit real-time message to room
         socketio.emit('receive_message', {
             "sender": current_user.name,
             "message": msg.message,
             "image_filename": msg.image_filename,
             "voice_filename": msg.voice_filename,
-            "video_filename": msg.video_filename,
             "timestamp": msg.timestamp.strftime('%H:%M')
         }, room=str(room.id))
         
+        # Update notifications for room members
+        from app.chat_socket import update_notifications_for_room
+        update_notifications_for_room(room.id, current_user.id)
+        
         return redirect(url_for("chat.chat_room", room_id=room.id))
 
-    messages = ChatMessage.query.filter_by(room_id=room.id).all()
+    messages = ChatMessage.query.filter_by(room_id=room.id).order_by(ChatMessage.timestamp.desc()).limit(50).all()
+    messages.reverse()  # Show oldest messages first
     members = ChatRoomMember.query.filter_by(room_id=room.id).all()
     
     # Mark room as read for current user

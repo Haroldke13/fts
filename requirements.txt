@@ -21,3 +21,4 @@ requests
 email_validator
 Flask-Caching
 flask-compress
+gevent-websocket

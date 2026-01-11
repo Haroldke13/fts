@@ -11,7 +11,7 @@ from .db import db
 from .forms import UploadFileForm, CheckoutFileForm, ReturnFileForm
 login_manager = LoginManager()
 jwt = JWTManager()
-socketio = SocketIO(cors_allowed_origins="*")
+socketio = SocketIO(cors_allowed_origins="*", async_mode='threading', transports=['polling'])
 cache = None
 
 def create_app():
