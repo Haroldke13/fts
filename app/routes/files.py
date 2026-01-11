@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, send_from_directory, jsonify
 from flask_login import login_required, current_user
 from app.models import FileRecord, FileTransaction
 from app.forms import CheckoutFileForm, ReturnFileForm, UploadFileForm
@@ -25,89 +25,165 @@ def dashboard():
 @admin_required
 def return_file():
     form = ReturnFileForm()
-    if form.validate_on_submit():
-        file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
-        if not file:
-            flash("File not found", "danger")
-            return redirect(url_for("files.dashboard"))
-        # Find the active transaction for this file (any user, since admin can return any file)
-        tx = FileTransaction.query.filter_by(
-            file_id=file.id,
-            return_time=None
-        ).first()
-        if not tx:
-            flash("File is not currently checked out", "danger")
-            return redirect(url_for("files.dashboard"))
-        
-        try:
-            tx.return_time = datetime.utcnow()
-            tx.comments = form.comments.data
-            tx.condition = form.condition.data
-            tx.return_signature = form.return_signature.data
-            tx.returned_to_admin_id = current_user.id
-            file.is_issued = False
-            db.session.commit()
-            flash("File returned", "success")
+    if request.form.get('ajax') == '1':
+        # AJAX request
+        if form.validate_on_submit():
+            file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+            if not file:
+                return jsonify({'success': False, 'message': 'File not found'}), 404
+            # Find the active transaction for this file (any user, since admin can return any file)
+            tx = FileTransaction.query.filter_by(
+                file_id=file.id,
+                return_time=None
+            ).first()
+            if not tx:
+                return jsonify({'success': False, 'message': 'File is not currently checked out'}), 400
             
-            # Clear any cached dashboard data
-            cache.delete_memoized(dashboard)
-            
-            from app.chat_socket import emit_file_update
-            emit_file_update(tx, "return")
-            from app.utils.audit import log_action
-            log_action(f"File {file.file_number} returned")
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error returning file: {str(e)}', 'danger')
-        
+            try:
+                tx.return_time = datetime.utcnow()
+                tx.comments = form.comments.data
+                tx.condition = form.condition.data
+                tx.return_signature = form.return_signature.data
+                tx.returned_to_admin_id = current_user.id
+                file.is_issued = False
+                db.session.commit()
+                
+                # Clear any cached dashboard data
+                cache.delete_memoized(dashboard)
+                
+                from app.chat_socket import emit_file_update
+                emit_file_update(tx, "return")
+                from app.utils.audit import log_action
+                log_action(f"File {file.file_number} returned")
+                return jsonify({'success': True, 'message': 'File returned successfully'})
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'success': False, 'message': f'Error returning file: {str(e)}'}), 500
+        else:
+            errors = {field: errors for field, errors in form.errors.items()}
+            return jsonify({'success': False, 'errors': errors}), 400
     else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"{field}: {error}", "danger")
-    return redirect(url_for("files.dashboard"))
+        # Regular form submission
+        if form.validate_on_submit():
+            file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+            if not file:
+                flash("File not found", "danger")
+                return redirect(url_for("files.dashboard"))
+            # Find the active transaction for this file (any user, since admin can return any file)
+            tx = FileTransaction.query.filter_by(
+                file_id=file.id,
+                return_time=None
+            ).first()
+            if not tx:
+                flash("File is not currently checked out", "danger")
+                return redirect(url_for("files.dashboard"))
+            
+            try:
+                tx.return_time = datetime.utcnow()
+                tx.comments = form.comments.data
+                tx.condition = form.condition.data
+                tx.return_signature = form.return_signature.data
+                tx.returned_to_admin_id = current_user.id
+                file.is_issued = False
+                db.session.commit()
+                flash("File returned", "success")
+                
+                # Clear any cached dashboard data
+                cache.delete_memoized(dashboard)
+                
+                from app.chat_socket import emit_file_update
+                emit_file_update(tx, "return")
+                from app.utils.audit import log_action
+                log_action(f"File {file.file_number} returned")
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error returning file: {str(e)}', 'danger')
+            
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f"{field}: {error}", "danger")
+        return redirect(url_for("files.dashboard"))
 
 @bp.route("/checkout", methods=["POST"])
 @login_required
 def checkout():
     form = CheckoutFileForm()
-    if form.validate_on_submit():
-        file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
-        if not file:
-            flash("File not found", "danger")
-            return redirect(url_for("files.dashboard"))
-        if file.is_issued:
-            flash("File is already checked out", "error")
-            return redirect(url_for("files.dashboard"))
-        
-        try:
-            tx = FileTransaction(
-                file_id=file.id,
-                user_id=current_user.id,
-                checkout_time=datetime.utcnow(),
-                purpose=form.purpose.data,
-                checkout_signature=form.checkout_signature.data
-            )
-            file.is_issued = True
-            db.session.add(tx)
-            db.session.commit()
-            flash("File checked out", "success")
+    if request.form.get('ajax') == '1':
+        # AJAX request
+        if form.validate_on_submit():
+            file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+            if not file:
+                return jsonify({'success': False, 'message': 'File not found'}), 404
+            if file.is_issued:
+                return jsonify({'success': False, 'message': 'File is already checked out'}), 400
             
-            # Clear any cached dashboard data
-            cache.delete_memoized(dashboard)
-            
-            from app.chat_socket import emit_file_update
-            emit_file_update(tx, "checkout")
-            from app.utils.audit import log_action
-            log_action(f"File {file.file_number} checked out by {current_user.name}")
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error checking out file: {str(e)}', 'danger')
-        
+            try:
+                tx = FileTransaction(
+                    file_id=file.id,
+                    user_id=current_user.id,
+                    checkout_time=datetime.utcnow(),
+                    purpose=form.purpose.data,
+                    checkout_signature=form.checkout_signature.data
+                )
+                file.is_issued = True
+                db.session.add(tx)
+                db.session.commit()
+                
+                # Clear any cached dashboard data
+                cache.delete_memoized(dashboard)
+                
+                from app.chat_socket import emit_file_update
+                emit_file_update(tx, "checkout")
+                from app.utils.audit import log_action
+                log_action(f"File {file.file_number} checked out by {current_user.name}")
+                return jsonify({'success': True, 'message': 'File checked out successfully'})
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'success': False, 'message': f'Error checking out file: {str(e)}'}), 500
+        else:
+            errors = {field: errors for field, errors in form.errors.items()}
+            return jsonify({'success': False, 'errors': errors}), 400
     else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"{field}: {error}", "danger")
-    return redirect(url_for("files.dashboard"))
+        # Regular form submission
+        if form.validate_on_submit():
+            file = FileRecord.query.filter_by(file_number=form.file_number.data).first()
+            if not file:
+                flash("File not found", "danger")
+                return redirect(url_for("files.dashboard"))
+            if file.is_issued:
+                flash("File is already checked out", "error")
+                return redirect(url_for("files.dashboard"))
+            
+            try:
+                tx = FileTransaction(
+                    file_id=file.id,
+                    user_id=current_user.id,
+                    checkout_time=datetime.utcnow(),
+                    purpose=form.purpose.data,
+                    checkout_signature=form.checkout_signature.data
+                )
+                file.is_issued = True
+                db.session.add(tx)
+                db.session.commit()
+                flash("File checked out", "success")
+                
+                # Clear any cached dashboard data
+                cache.delete_memoized(dashboard)
+                
+                from app.chat_socket import emit_file_update
+                emit_file_update(tx, "checkout")
+                from app.utils.audit import log_action
+                log_action(f"File {file.file_number} checked out by {current_user.name}")
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error checking out file: {str(e)}', 'danger')
+            
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f"{field}: {error}", "danger")
+        return redirect(url_for("files.dashboard"))
 
 
 @bp.route("/files/scan/<file_number>")
