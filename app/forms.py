@@ -10,31 +10,16 @@ class LoginForm(FlaskForm):
     
     
 class CheckoutFileForm(FlaskForm):
-    file_number = StringField("File Number", validators=[DataRequired()])
+    file_number = StringField("File Number", validators=[DataRequired()], render_kw={"placeholder": "OP/218/051/___","autofocus": True } )                                           
     purpose = TextAreaField("Purpose of taking file", validators=[DataRequired()])
     checkout_signature = StringField("Checkout Signature")
     submit = SubmitField("Check Out File")
     
     
-"""class ReturnFileForm(FlaskForm):
-    file_number = StringField("File Number", validators=[DataRequired()])
-    comments = TextAreaField("Comments on return")
-    condition = SelectField(
-        "File Condition",
-        choices=[
-            ("good", "Good"),
-            ("fair", "Fair"),
-            ("damaged", "Damaged"),
-            ("lost", "Lost"),
-        ],
-        default="good"
-    )
-    return_signature = StringField("Return Signature")
-    submit = SubmitField("Return File")"""
 
 
 class ReturnFileForm(FlaskForm):
-    file_number = StringField("File Number", validators=[DataRequired()])
+    file_number = StringField("File Number", validators=[DataRequired()],render_kw={"placeholder": "OP/218/051/___","autofocus": True})                   
     comments = TextAreaField("Comments on return")
     condition = SelectField("File Condition", 
                            choices=[("good", "Good"), ("fair", "Fair"), ("damaged", "Damaged"), ("lost", "Lost")], 
@@ -45,20 +30,15 @@ class ReturnFileForm(FlaskForm):
 class UploadFileForm(FlaskForm):
     file_number = StringField(
         "File Number",
-        validators=[DataRequired(message="File number is required")]
+        validators=[DataRequired(message="File number is required")], render_kw={"placeholder": "OP/218/051/___ "}
     )
-    name = StringField("Name")
+    name = StringField("Company Name", render_kw={"placeholder": "Enter your company name"})
     department = StringField("Department")
     file = FileField("File (Optional)")
     submit = SubmitField("Upload File")
 
 
-"""class UploadFileForm(FlaskForm):
-    file_number = StringField("File Number", validators=[DataRequired()])
-    title = StringField("Title")
-    department = StringField("Department")
-    file = FileField("File (Optional)")
-    submit = SubmitField("Upload File")"""
+
     
     
 class CreateUserForm(FlaskForm):
